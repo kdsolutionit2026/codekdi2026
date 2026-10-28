@@ -641,6 +641,9 @@ The UI must **hide or disable** unsupported features per processor and per merch
 ├─ supabase/
 │  ├─ config.toml
 │  ├─ migrations/                       ← ordered, immutable after merge
+│  │                                     (the authoritative numbering for the build
+│  │                                      lives in spec.md §8; the list below is the
+│  │                                      original illustrative grouping)
 │  │  ├─ 0001_extensions_and_schemas.sql
 │  │  ├─ 0002_enums.sql
 │  │  ├─ 0003_identity_and_rbac.sql

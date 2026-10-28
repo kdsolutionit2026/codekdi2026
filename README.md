@@ -9,7 +9,9 @@
 
 | Document | What it is |
 |---|---|
-| **[docs/MASTER_SPECIFICATION.md](docs/MASTER_SPECIFICATION.md)** | The authoritative, contradiction-free master specification: product, compliance, architecture, full database schema, double-entry ledger, RBAC, payments/risk, security, UI/UX, API, 3-phase plan, and a 240+ row traceability matrix. |
+| **[docs/MASTER_SPECIFICATION.md](docs/MASTER_SPECIFICATION.md)** | The authoritative, contradiction-free master specification: product, compliance, architecture, full database schema, double-entry ledger, RBAC, payments/risk, security, UI/UX, API, 3-phase plan, and a 241-row traceability matrix. |
+| **[spec.md](spec.md)** | The **executable build plan** for AI agents: 32 ordered steps with exact files, commands, tests, verification gates, copy-paste recipes, and the pitfalls that break real deployments. Start here when coding. |
+| [docs/PROGRESS.md](docs/PROGRESS.md) | Live build tracker: current step, last session's results, environment versions. The agent updates it every session. |
 | [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) | Business/legal decisions that must be closed before live traffic. |
 | [docs/runbooks/README.md](docs/runbooks/README.md) | Operational runbooks to write before launch. |
 
