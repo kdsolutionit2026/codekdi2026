@@ -4,16 +4,18 @@
 
 ## Status
 
-- **Current phase:** Phase 0 — not started
+- **Current phase:** Phase 0 — not started (0 of 60 steps done)
 - **Last completed step:** none
-- **Next step:** S0.1 — repository scaffold and toolchain
+- **Next step:** S0.1 — repository scaffold and toolchain (`npm`-free: `pnpm`)
+- **Steps total:** 60 (13 phase 0 · 21 phase 1 · 18 phase 2 · 8 phase 3) — see `docs/steps.json`
 - **Blocked by:** nothing
 - **Last environment check:** 2026-10-29 — repository contains only docs (`README.md`, `spec.md`, `docs/`); no application code yet
 
 ## Log (newest first)
 
 ### 2026-10-29 — planning
-- Done: master specification v1.0.0 (`docs/MASTER_SPECIFICATION.md`) and build plan v1.0.0 (`spec.md`)
+- Done: master specification v1.0.0 (`docs/MASTER_SPECIFICATION.md`); build plan v1.1.0 (`spec.md`) — 60 steps, Appendix B requirement map (241/241 owned), Phase 2/3 packets, security/ops steps S0.12/S0.13
+- Gate: `node scripts/check-docs.mjs` 0 problems · `node scripts/check-fr-coverage.mjs` 241/241 · `node scripts/check-steps.mjs --strict` exit 0
 - Tests: n/a (no code)
 - Deviations: none
 - Next: S0.1

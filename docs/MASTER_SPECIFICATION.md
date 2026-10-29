@@ -2895,7 +2895,7 @@ create table audit.checkpoints (
 
 ---
 
-### 6.14 Functions, triggers, RPC surface & access model
+### 6.14 Functions, triggers, command layer & access model
 
 **Access model (defense in depth):**
 
@@ -2994,35 +2994,39 @@ $$;
 | `dispute_funds_guard` | `disputes` | first transition to `needs_response` moves exactly the dispute amount to `DISPUTED` bucket |
 | `outbox_on_mutation` | domain tables | insert outbox event in the same transaction |
 
-**Public RPC surface (merchant/user context)**
+**Command layer — server-only functions (schema `private`, never `public`)**
 
-| RPC | Permission | Purpose |
+These are the write-side commands of the platform. They live in the `private` schema, are `security definer`, and are granted **only** to the `app_runtime` login role used by our Next.js server. They are **not** exposed through PostgREST and are **never** granted to `anon`/`authenticated`: a browser JWT must not be able to create invoices, approve payouts, or touch the ledger. The browser calls a Next.js route/Server Action, which calls the command inside a tenant transaction and returns the result. See build plan §17.2 for the calling pattern and the privilege test.
+
+The "Permission" column is the **application** permission the caller must hold (checked by `private.assert_permission` inside the function); it is not a Postgres grant. "Token" means the buyer-side token in the URL is verified by the server before the call.
+
+| Command (`private.…`) | Permission | Purpose |
 |---|---|---|
-| `rpc_create_invoice(payload jsonb)` | `invoices.create` | Create draft with line items + tax snapshot |
-| `rpc_finalize_invoice(invoice_id)` | `invoices.send` | Lock totals, allocate number, render snapshot |
-| `rpc_send_invoice(invoice_id, channels)` | `invoices.send` | Email/SMS/link delivery + event |
-| `rpc_void_invoice(invoice_id, reason)` | `invoices.void` | Void unpaid invoice |
-| `rpc_create_payment_link(payload jsonb)` | `payment_links.create` | Tokenized link |
-| `rpc_start_checkout(payload jsonb)` | public (token) | Create checkout session (rate-limited, Turnstile) |
-| `rpc_complete_checkout(session_id, processor_ref)` | public (signed) | Verify with processor, lock invoice, post ledger |
-| `rpc_request_refund(payment_id, amount, reason)` | `refunds.create` | Bounded refund request |
-| `rpc_approve_refund(refund_id)` | `refunds.approve` | Maker-checker above threshold |
-| `rpc_create_dispute_evidence(dispute_id, payload)` | `disputes.manage` | Upload metadata (§21.4) |
-| `rpc_submit_dispute(dispute_id)` | `disputes.submit` | Submit evidence package |
-| `rpc_schedule_payout(payload jsonb)` | `payouts.create` | Manual payout |
-| `rpc_approve_payout(payout_id)` | `payouts.approve` | Maker-checker |
-| `rpc_update_merchant_profile(payload jsonb)` | `settings.manage` | Branding/settings (protected columns rejected) |
-| `rpc_invite_team_member(email, role_code)` | `team.manage` | Invite + role assignment |
-| `rpc_revoke_team_member(user_id)` | `team.manage` | Remove access + revoke sessions |
-| `rpc_create_api_key(name, scopes, env)` | `developers.manage` | Returns plaintext once, stores hash |
-| `rpc_rotate_webhook_secret(endpoint_id)` | `developers.manage` | New secret, old valid 24 h |
-| `rpc_ledger_adjustment(payload jsonb)` | `finance.adjust` | Request (maker) / apply (checker) |
-| `rpc_kyb_decision(application_id, decision, reason)` | `compliance.review` | Approve/reject with audit |
-| `rpc_set_merchant_controls(merchant_id, flags)` | `merchants.manage` | Enable/disable charges/payouts |
-| `rpc_get_buyer_invoice(token)` | public (token) | Returns redacted invoice for checkout |
-| `rpc_buyer_receipt(token)` | public (token) | Receipt data after payment |
+| `private.create_invoice(payload jsonb)` | `invoices.create` | Create draft with line items + tax snapshot |
+| `private.finalize_invoice(invoice_id)` | `invoices.send` | Lock totals, allocate number, render snapshot |
+| `private.send_invoice(invoice_id, channels)` | `invoices.send` | Email/SMS/link delivery + event |
+| `private.void_invoice(invoice_id, reason)` | `invoices.void` | Void unpaid invoice |
+| `private.create_payment_link(payload jsonb)` | `payment_links.create` | Tokenized link |
+| `private.start_checkout(payload jsonb)` | public (token) | Create checkout session (rate-limited, Turnstile) |
+| `private.complete_checkout(session_id, processor_ref)` | public (signed) | Verify with processor, lock invoice, post ledger |
+| `private.request_refund(payment_id, amount, reason)` | `refunds.create` | Bounded refund request |
+| `private.approve_refund(refund_id)` | `refunds.approve` | Maker-checker above threshold |
+| `private.create_dispute_evidence(dispute_id, payload)` | `disputes.manage` | Upload metadata (§21.4) |
+| `private.submit_dispute(dispute_id)` | `disputes.submit` | Submit evidence package |
+| `private.schedule_payout(payload jsonb)` | `payouts.create` | Manual payout |
+| `private.approve_payout(payout_id)` | `payouts.approve` | Maker-checker |
+| `private.update_merchant_profile(payload jsonb)` | `settings.manage` | Branding/settings (protected columns rejected) |
+| `private.invite_team_member(email, role_code)` | `team.manage` | Invite + role assignment |
+| `private.revoke_team_member(user_id)` | `team.manage` | Remove access + revoke sessions |
+| `private.create_api_key(name, scopes, env)` | `developers.manage` | Returns plaintext once, stores hash |
+| `private.rotate_webhook_secret(endpoint_id)` | `developers.manage` | New secret, old valid 24 h |
+| `private.ledger_adjustment(payload jsonb)` | `finance.adjust` | Request (maker) / apply (checker) |
+| `private.kyb_decision(application_id, decision, reason)` | `compliance.review` | Approve/reject with audit |
+| `private.set_merchant_controls(merchant_id, flags)` | `merchants.manage` | Enable/disable charges/payouts |
+| `private.get_buyer_invoice(token)` | public (token) | Returns redacted invoice for checkout |
+| `private.buyer_receipt(token)` | public (token) | Receipt data after payment |
 
-Every RPC: validates `p_*` inputs, calls `private.assert_permission`, writes audit + outbox, returns a typed JSON envelope `{ data | error }`. RPCs never accept `merchant_id` from an untrusted caller without verifying membership (tenant parameter is checked, not trusted).
+Every command: validates `p_*` inputs, calls `private.assert_permission`, writes audit + outbox, returns a typed JSON envelope `{ data | error }`. Commands never accept `merchant_id` from an untrusted caller without verifying membership (tenant parameter is checked, not trusted). Commands that move money (`request_refund`, `approve_refund`, `schedule_payout`, `approve_payout`, `ledger_adjustment`, `complete_checkout`, `ledger_post`) exist only in `private` and are unreachable from any HTTP client. A CI test asserts `anon` and `authenticated` hold no EXECUTE privilege on them (build plan §17.2).
 
 ### 6.15 Row-Level Security catalog
 
@@ -4448,7 +4452,7 @@ Merchant Portal (mobile-first responsive)
 
 ### 24.3 Dashboard content rules
 
-- Max **6 queries** for Home; one RPC `rpc_merchant_home(range)` returning all widgets.
+- Max **6 queries** for Home; one server-only function `private.merchant_home(range)` returning all widgets (read-side commands are `private` too, so the browser still only talks to our server).
 - Every KPI shows value, delta vs prior period, and the period used; no vanity metrics without definition tooltips.
 - Numbers link to filtered lists.
 - Empty states explain the next action ("Create your first invoice").

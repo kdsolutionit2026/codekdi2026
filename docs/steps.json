@@ -1,0 +1,1404 @@
+{
+  "version": 1,
+  "plan": "spec.md",
+  "master_spec": "docs/MASTER_SPECIFICATION.md",
+  "updated": "2026-10-29",
+  "notes": "Machine-readable mirror of spec.md \u00a73\u2013\u00a76. An agent may only start a step whose depends_on are all done. files = the artefacts that must exist for the step to be complete (enforced by scripts/check-steps.mjs). status: pending | in_progress | blocked | done.",
+  "steps": [
+    {
+      "id": "S0.1",
+      "phase": 0,
+      "title": "Repository scaffold and toolchain",
+      "depends_on": [],
+      "files": [
+        "package.json",
+        "tsconfig.json",
+        "next.config.ts",
+        "src/lib/env.ts",
+        "src/lib/errors.ts",
+        "vitest.config.ts",
+        "docs/PROGRESS.md",
+        "scripts/check-steps.mjs"
+      ],
+      "verify": "pnpm lint && pnpm typecheck && pnpm build",
+      "done_when": "Clean clone: pnpm install && pnpm build is green; missing env var fails at boot with a readable message",
+      "fr": [],
+      "status": "pending"
+    },
+    {
+      "id": "S0.2",
+      "phase": 0,
+      "title": "CI quality gates",
+      "depends_on": [
+        "S0.1"
+      ],
+      "files": [
+        ".github/workflows/ci.yml",
+        "eslint.config.mjs"
+      ],
+      "verify": "act -j ci  # or: push to a branch and confirm every job is green",
+      "done_when": "A PR with a lint error, a failing test, a high-severity dependency and a secret is blocked by four separate jobs",
+      "fr": [
+        "FR-NFR-005",
+        "FR-NFR-006",
+        "FR-SEC-014"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S0.3",
+      "phase": 0,
+      "title": "Database bootstrap (extensions, schemas, roles)",
+      "depends_on": [
+        "S0.2"
+      ],
+      "files": [
+        "supabase/config.toml",
+        "supabase/migrations/0001_extensions_and_schemas.sql",
+        "supabase/migrations/0002_domains_and_helpers.sql",
+        "supabase/migrations/0002b_app_roles.sql"
+      ],
+      "verify": "supabase db reset && pnpm test:integration --grep bootstrap",
+      "done_when": "db reset applies from zero; app_runtime exists, is not superuser, cannot bypass RLS",
+      "fr": [],
+      "status": "pending"
+    },
+    {
+      "id": "S0.4",
+      "phase": 0,
+      "title": "Design tokens, primitives and app shells",
+      "depends_on": [
+        "S0.1"
+      ],
+      "files": [
+        "src/app/globals.css",
+        "src/components/ui/button.tsx",
+        "src/components/ui/money-input.tsx",
+        "src/app/design/page.tsx"
+      ],
+      "verify": "pnpm test:e2e --grep design && pnpm lint",
+      "done_when": "/design renders every primitive at 320/768/1440 with no axe violations",
+      "fr": [
+        "FR-UX-001",
+        "FR-UX-002",
+        "FR-UX-003",
+        "FR-UX-010"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S0.5",
+      "phase": 0,
+      "title": "Data access layer (postgres.js, tenant transactions, money safety)",
+      "depends_on": [
+        "S0.3"
+      ],
+      "files": [
+        "src/lib/db/client.ts",
+        "src/lib/db/tenant.ts",
+        "src/lib/db/paginate.ts",
+        "src/lib/db/schema.types.ts",
+        "src/lib/logger.ts",
+        "src/lib/request.ts",
+        "src/lib/crypto.ts",
+        "src/lib/money/index.ts"
+      ],
+      "verify": "pnpm test && pnpm test:integration --grep \"tenant|money\"",
+      "done_when": "current_user is app_runtime; money round-trips exactly; no float anywhere (grep + test)",
+      "fr": [
+        "FR-TEN-004",
+        "FR-SEC-009"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S0.6",
+      "phase": 0,
+      "title": "Authentication with opaque server-side sessions",
+      "depends_on": [
+        "S0.5"
+      ],
+      "files": [
+        "supabase/migrations/0003_identity.sql",
+        "src/lib/security/session.ts",
+        "src/lib/security/token.ts",
+        "src/app/(auth)/sign-in/page.tsx"
+      ],
+      "verify": "pnpm test:integration --grep session && pnpm test:e2e --grep sign-in",
+      "done_when": "Revoked session rejected on the next request; auth.users insert creates app_users via trigger",
+      "fr": [
+        "FR-AUTH-001",
+        "FR-AUTH-002",
+        "FR-AUTH-003",
+        "FR-AUTH-004",
+        "FR-AUTH-005",
+        "FR-AUTH-006",
+        "FR-AUTH-007",
+        "FR-SEC-004",
+        "FR-SEC-010",
+        "FR-SEC-011"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S0.7",
+      "phase": 0,
+      "title": "RBAC: roles, permissions, guards, action wrapper",
+      "depends_on": [
+        "S0.6"
+      ],
+      "files": [
+        "supabase/migrations/0004_rbac.sql",
+        "src/lib/actions/action.ts",
+        "src/lib/security/permissions.ts"
+      ],
+      "verify": "pnpm test:integration --grep rbac",
+      "done_when": "Every action without permission returns FORBIDDEN; CSRF failure blocks; audit row written",
+      "fr": [
+        "FR-SEC-003"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S0.8",
+      "phase": 0,
+      "title": "RLS foundation, exposure rules and isolation harness",
+      "depends_on": [
+        "S0.7"
+      ],
+      "files": [
+        "supabase/migrations/0004b_rls_helpers.sql",
+        "tests/rls/isolation.test.ts",
+        "tests/helpers/db.ts"
+      ],
+      "verify": "pnpm test:rls",
+      "done_when": "Every table is in the RLS matrix; disabling RLS on any table fails the suite",
+      "fr": [
+        "FR-TEN-001",
+        "FR-TEN-002",
+        "FR-SEC-001"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S0.9",
+      "phase": 0,
+      "title": "Audit log with hash chain and signed checkpoints",
+      "depends_on": [
+        "S0.3"
+      ],
+      "files": [
+        "supabase/migrations/0005_audit.sql",
+        "src/lib/audit.ts",
+        "src/lib/crypto.ts"
+      ],
+      "verify": "pnpm test:integration --grep audit",
+      "done_when": "Tampering with any row is detected; checkpoints verify; UPDATE/DELETE are rejected",
+      "fr": [
+        "FR-AUD-001",
+        "FR-AUD-002",
+        "FR-AUD-003"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S0.10",
+      "phase": 0,
+      "title": "Outbox, job worker, scheduler, feature flags",
+      "depends_on": [
+        "S0.9"
+      ],
+      "files": [
+        "supabase/migrations/0006_jobs_flags.sql",
+        "src/lib/jobs/outbox.ts",
+        "src/lib/jobs/worker.ts",
+        "src/lib/flags.ts",
+        "src/app/api/internal/cron/[job]/route.ts"
+      ],
+      "verify": "pnpm test:integration --grep \"outbox|worker\"",
+      "done_when": "A job is processed exactly once; a crash is retried; dead letters are visible",
+      "fr": [
+        "FR-TEN-005",
+        "FR-SEC-005"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S0.11",
+      "phase": 0,
+      "title": "Platform profile (white-label) and public shell",
+      "depends_on": [
+        "S0.4",
+        "S0.10"
+      ],
+      "files": [
+        "supabase/migrations/0007_platform_cms.sql",
+        "src/features/platform/queries.ts",
+        "src/app/(marketing)/layout.tsx"
+      ],
+      "verify": "pnpm test:e2e --grep \"platform profile\"",
+      "done_when": "Changing brand name in the DB changes header, footer and email; no hardcoded brand string",
+      "fr": [
+        "FR-CMS-008",
+        "FR-NFR-002"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S0.12",
+      "phase": 0,
+      "title": "Security headers, CSP, edge controls, no-theater audit",
+      "depends_on": [
+        "S0.6",
+        "S0.11"
+      ],
+      "files": [
+        "src/middleware.ts",
+        "scripts/check-headers.mjs",
+        "docs/OPERATIONS.md"
+      ],
+      "verify": "node scripts/check-headers.mjs --base https://staging.example.com",
+      "done_when": "All six route profiles carry the header set; CSP has no unsafe-eval; a deliberate inline handler is blocked",
+      "fr": [
+        "FR-SEC-002",
+        "FR-SEC-012",
+        "FR-SEC-013",
+        "FR-SEC-020"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S0.13",
+      "phase": 0,
+      "title": "Operations baseline: backups, restore drill, runbooks, incident",
+      "depends_on": [
+        "S0.3",
+        "S0.9"
+      ],
+      "files": [
+        "docs/runbooks/README.md",
+        "docs/ONCALL.md",
+        "scripts/restore-drill.md",
+        "src/app/api/internal/health/route.ts"
+      ],
+      "verify": "pnpm test:integration --grep health && node scripts/check-runbooks.mjs",
+      "done_when": "One restore drill recorded with duration; every alert has a runbook",
+      "fr": [
+        "FR-NFR-003",
+        "FR-NFR-004",
+        "FR-NFR-007",
+        "FR-SEC-019"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.1",
+      "phase": 1,
+      "title": "Merchants, profiles, settings, limits, provisioning",
+      "depends_on": [
+        "S0.8"
+      ],
+      "files": [
+        "supabase/migrations/0008_merchants.sql",
+        "src/features/merchants/queries.ts",
+        "src/features/merchants/actions.ts"
+      ],
+      "verify": "pnpm test:integration --grep merchant",
+      "done_when": "Statement descriptor validation rejects >22 chars; provisioning creates ledger accounts",
+      "fr": [
+        "FR-MER-001"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.2",
+      "phase": 1,
+      "title": "Onboarding wizard and secure document upload",
+      "depends_on": [
+        "S1.1"
+      ],
+      "files": [
+        "supabase/migrations/0009_kyb.sql",
+        "src/features/kyb/wizard.tsx",
+        "src/lib/storage/upload.ts"
+      ],
+      "verify": "pnpm test:integration --grep upload && pnpm test:e2e --grep onboarding",
+      "done_when": "A 10 MB+ file, a wrong magic-byte file and a path escape are all rejected; resume works",
+      "fr": [
+        "FR-KYB-001",
+        "FR-KYB-002",
+        "FR-KYB-003",
+        "FR-KYB-004",
+        "FR-TEN-003",
+        "FR-SEC-007",
+        "FR-AUD-004"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.3",
+      "phase": 1,
+      "title": "Admin KYB review, lifecycle controls, tax forms",
+      "depends_on": [
+        "S1.2"
+      ],
+      "files": [
+        "supabase/migrations/0010_tax_documents.sql",
+        "src/features/compliance/review.tsx",
+        "src/lib/security/crypto.ts"
+      ],
+      "verify": "pnpm test:e2e --grep \"kyb review\"",
+      "done_when": "Approve/suspend flips charges_enabled and writes audit; encryption uses AES-256-GCM with key version",
+      "fr": [
+        "FR-KYB-005",
+        "FR-KYB-006",
+        "FR-KYB-008",
+        "FR-KYB-009",
+        "FR-KYB-010",
+        "FR-KYB-013",
+        "FR-TAX-001",
+        "FR-SEC-008",
+        "FR-UX-008"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.4",
+      "phase": 1,
+      "title": "Bank accounts, verification and change protection",
+      "depends_on": [
+        "S1.1"
+      ],
+      "files": [
+        "supabase/migrations/0011_banking.sql",
+        "src/features/banking/service.ts"
+      ],
+      "verify": "pnpm test:integration --grep bank",
+      "done_when": "Change requires two users + 24h cooling; account numbers masked everywhere",
+      "fr": [
+        "FR-BNK-001",
+        "FR-BNK-002",
+        "FR-BNK-003",
+        "FR-BNK-004"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.5",
+      "phase": 1,
+      "title": "Ledger core: accounts, posting, immutability, hash chain",
+      "depends_on": [
+        "S1.1"
+      ],
+      "files": [
+        "supabase/migrations/0012_ledger.sql",
+        "src/lib/ledger/post.ts",
+        "src/lib/ledger/builders.ts"
+      ],
+      "verify": "pnpm test:integration --grep ledger",
+      "done_when": "Unbalanced post rejected; UPDATE/DELETE rejected; chain verifies; balance = sum(entries)",
+      "fr": [
+        "FR-LDG-001",
+        "FR-LDG-002",
+        "FR-LDG-003",
+        "FR-LDG-004",
+        "FR-LDG-005",
+        "FR-LDG-006",
+        "FR-LDG-009"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.6",
+      "phase": 1,
+      "title": "Plans, fee schedules and the fee engine",
+      "depends_on": [
+        "S1.5"
+      ],
+      "files": [
+        "supabase/migrations/0013_billing.sql",
+        "src/features/fees/engine.ts"
+      ],
+      "verify": "pnpm test --project unit -- invoice-fees",
+      "done_when": "Fee math matches the spec table for 20 cases; snapshot immutable per charge",
+      "fr": [
+        "FR-FEE-003",
+        "FR-FEE-004"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.7",
+      "phase": 1,
+      "title": "Customers, invoices, numbering, tax lines",
+      "depends_on": [
+        "S1.5",
+        "S1.6"
+      ],
+      "files": [
+        "supabase/migrations/0014_commerce.sql",
+        "src/features/invoices/service.ts",
+        "src/features/invoices/numbering.ts"
+      ],
+      "verify": "pnpm test:integration --grep invoice",
+      "done_when": "Gapless numbering per merchant per year under 20 parallel inserts; paid invoices immutable",
+      "fr": [
+        "FR-INV-001",
+        "FR-INV-002",
+        "FR-INV-003",
+        "FR-INV-004",
+        "FR-INV-005",
+        "FR-INV-007",
+        "FR-INV-008",
+        "FR-INV-011",
+        "FR-INV-015",
+        "FR-TAX-004"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.8",
+      "phase": 1,
+      "title": "Invoice PDF with security design",
+      "depends_on": [
+        "S1.7"
+      ],
+      "files": [
+        "src/lib/pdf/invoice.ts",
+        "src/lib/pdf/guilloche.ts",
+        "src/lib/pdf/qr.ts"
+      ],
+      "verify": "pnpm test --project unit -- pdf",
+      "done_when": "PDF renders in <300ms, contains QR + hash + watermark, and is byte-identical for the same input",
+      "fr": [
+        "FR-INV-006",
+        "FR-UX-007"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.9",
+      "phase": 1,
+      "title": "Payment links and the hosted checkout page",
+      "depends_on": [
+        "S1.7",
+        "S1.10"
+      ],
+      "files": [
+        "supabase/migrations/0014b_payment_links.sql",
+        "src/app/(checkout)/pay/[token]/page.tsx",
+        "src/lib/checkout/token.ts"
+      ],
+      "verify": "pnpm test:e2e --grep checkout",
+      "done_when": "Expired/revoked token 404s; amount cannot be tampered; no card field exists on our domain",
+      "fr": [
+        "FR-INV-010",
+        "FR-CHK-001",
+        "FR-CHK-003",
+        "FR-CHK-004",
+        "FR-CHK-005",
+        "FR-CHK-006",
+        "FR-CHK-007",
+        "FR-CHK-008",
+        "FR-CHK-009",
+        "FR-CHK-010",
+        "FR-UX-009"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.10",
+      "phase": 1,
+      "title": "Processor adapter interface + sandbox + Stripe/Airwallex skeletons",
+      "depends_on": [
+        "S1.5"
+      ],
+      "files": [
+        "src/lib/processors/types.ts",
+        "src/lib/processors/registry.ts",
+        "src/lib/processors/sandbox.ts",
+        "src/lib/processors/stripe.ts",
+        "src/lib/processors/airwallex.ts"
+      ],
+      "verify": "pnpm test --project unit -- processors",
+      "done_when": "Every adapter passes the same contract suite; sandbox/live keys are strictly separated",
+      "fr": [
+        "FR-PAY-009",
+        "FR-CHK-002"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.11",
+      "phase": 1,
+      "title": "Payment completion: verification, locking, ledger, receipt",
+      "depends_on": [
+        "S1.5",
+        "S1.6",
+        "S1.7",
+        "S1.9",
+        "S1.10"
+      ],
+      "files": [
+        "supabase/migrations/0015_payments.sql",
+        "src/features/payments/service.ts",
+        "src/lib/risk/decide.ts"
+      ],
+      "verify": "pnpm test:integration --grep payment && pnpm test:e2e --grep \"pay invoice\"",
+      "done_when": "50 parallel completions produce exactly one payment, one ledger transaction, one receipt",
+      "fr": [
+        "FR-PAY-001",
+        "FR-PAY-002",
+        "FR-PAY-003",
+        "FR-PAY-004",
+        "FR-PAY-005",
+        "FR-PAY-006",
+        "FR-PAY-007",
+        "FR-PAY-008"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.12",
+      "phase": 1,
+      "title": "Inbound and outbound webhooks",
+      "depends_on": [
+        "S1.10",
+        "S1.11"
+      ],
+      "files": [
+        "supabase/migrations/0016_webhooks.sql",
+        "src/lib/webhooks/sign.ts",
+        "src/lib/webhooks/ssrf.ts",
+        "src/app/api/webhooks/processor/[provider]/route.ts"
+      ],
+      "verify": "pnpm test:integration --grep webhook",
+      "done_when": "Replayed, stale, tampered and SSRF-targeted deliveries are all rejected; retries back off",
+      "fr": [
+        "FR-API-006",
+        "FR-SEC-006"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.13",
+      "phase": 1,
+      "title": "Refunds, credit memos, negative-balance protection",
+      "depends_on": [
+        "S1.11"
+      ],
+      "files": [
+        "supabase/migrations/0017_refunds.sql",
+        "src/features/refunds/service.ts"
+      ],
+      "verify": "pnpm test:integration --grep refund",
+      "done_when": "Refund above captured is blocked; second approver required above threshold; ledger reversal balanced",
+      "fr": [
+        "FR-RFD-001",
+        "FR-RFD-002",
+        "FR-RFD-003",
+        "FR-RFD-004",
+        "FR-RFD-005",
+        "FR-RFD-006",
+        "FR-RFD-007",
+        "FR-RFD-008",
+        "FR-INV-009"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.14",
+      "phase": 1,
+      "title": "Payouts: eligibility, scheduling, approvals, receipts",
+      "depends_on": [
+        "S1.5",
+        "S1.11",
+        "S1.13"
+      ],
+      "files": [
+        "supabase/migrations/0018_payouts.sql",
+        "src/features/payouts/eligibility.ts",
+        "src/features/payouts/schedule.ts",
+        "src/lib/pdf/payout-receipt.ts"
+      ],
+      "verify": "pnpm test:integration --grep payout",
+      "done_when": "Ten eligibility checks enforced in one transaction; payout paid once; receipt PDF generated",
+      "fr": [
+        "FR-PYT-001",
+        "FR-PYT-002",
+        "FR-PYT-003",
+        "FR-PYT-004",
+        "FR-PYT-005",
+        "FR-PYT-006",
+        "FR-PYT-007",
+        "FR-PYT-009",
+        "FR-PYT-010",
+        "FR-PYT-012"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.15",
+      "phase": 1,
+      "title": "Merchant portal screens",
+      "depends_on": [
+        "S1.7",
+        "S1.11",
+        "S1.13",
+        "S1.14"
+      ],
+      "files": [
+        "src/app/(merchant)/app/page.tsx",
+        "src/features/merchant/queries.ts",
+        "src/components/layout/merchant-shell.tsx"
+      ],
+      "verify": "pnpm test:e2e --grep portal",
+      "done_when": "Dashboard \u2264 6 queries; every screen has loading/empty/error states; keyboard navigable",
+      "fr": [
+        "FR-UX-006",
+        "FR-LDG-011"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.16",
+      "phase": 1,
+      "title": "Admin console core",
+      "depends_on": [
+        "S1.3",
+        "S1.4",
+        "S1.14"
+      ],
+      "files": [
+        "src/app/(admin)/admin/page.tsx",
+        "src/features/admin/queries.ts",
+        "src/components/layout/admin-shell.tsx"
+      ],
+      "verify": "pnpm test:e2e --grep admin",
+      "done_when": "Queues show real counts; maker-checker inbox works; every action audited",
+      "fr": [
+        "FR-ADM-001",
+        "FR-ADM-002",
+        "FR-ADM-003",
+        "FR-ADM-004",
+        "FR-ADM-006",
+        "FR-ADM-009",
+        "FR-ADM-010",
+        "FR-ADM-011",
+        "FR-AUTH-008"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.17",
+      "phase": 1,
+      "title": "The 17 CMS pages, legal versions, SEO",
+      "depends_on": [
+        "S0.11"
+      ],
+      "files": [
+        "src/app/(marketing)/[slug]/page.tsx",
+        "src/features/cms/queries.ts",
+        "src/app/sitemap.ts"
+      ],
+      "verify": "pnpm test:e2e --grep cms",
+      "done_when": "All 17 pages render from DB in EN/BN; legal version bumps force re-acceptance",
+      "fr": [
+        "FR-CMS-001",
+        "FR-CMS-007",
+        "FR-SEC-018"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.18",
+      "phase": 1,
+      "title": "Notifications and email infrastructure",
+      "depends_on": [
+        "S1.11",
+        "S1.14"
+      ],
+      "files": [
+        "supabase/migrations/0019_support_notifications.sql",
+        "src/lib/email/transport.ts",
+        "src/lib/email/templates/index.ts"
+      ],
+      "verify": "pnpm test:integration --grep email",
+      "done_when": "Every event in the matrix sends once; failures retry; suppression respected",
+      "fr": [
+        "FR-NTF-001",
+        "FR-NTF-002",
+        "FR-NTF-003",
+        "FR-EML-001",
+        "FR-EML-005"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.19",
+      "phase": 1,
+      "title": "Public REST API v1, API keys, OpenAPI",
+      "depends_on": [
+        "S1.11",
+        "S1.12"
+      ],
+      "files": [
+        "supabase/migrations/0020_api_keys.sql",
+        "src/app/api/v1/[...path]/route.ts",
+        "docs/api/openapi.yaml"
+      ],
+      "verify": "pnpm test:contract && pnpm test:integration --grep api",
+      "done_when": "OpenAPI validates; idempotency + pagination + scopes enforced; key shown once",
+      "fr": [
+        "FR-API-001",
+        "FR-API-002",
+        "FR-API-003",
+        "FR-API-004",
+        "FR-API-005"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.20",
+      "phase": 1,
+      "title": "Statements, reconciliation (manual), daily close",
+      "depends_on": [
+        "S1.11",
+        "S1.14"
+      ],
+      "files": [
+        "supabase/migrations/0021_reconciliation.sql",
+        "src/features/reconciliation/match.ts",
+        "src/lib/pdf/statement.ts"
+      ],
+      "verify": "pnpm test:integration --grep reconciliation",
+      "done_when": "Ledger vs settlement variance is reported; daily close refuses to pass with unexplained items",
+      "fr": [
+        "FR-RCN-001",
+        "FR-RCN-002",
+        "FR-RCN-003",
+        "FR-RCN-004",
+        "FR-RCN-005",
+        "FR-RCN-006",
+        "FR-RPT-005"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S1.21",
+      "phase": 1,
+      "title": "End-to-end hardening and the Phase 1 gate",
+      "depends_on": [
+        "S1.15",
+        "S1.16",
+        "S1.17",
+        "S1.18",
+        "S1.19",
+        "S1.20"
+      ],
+      "files": [
+        "scripts/smoke.ts",
+        "tests/e2e/critical.spec.ts",
+        "docs/OPERATIONS.md"
+      ],
+      "verify": "pnpm verify && pnpm test:e2e && pnpm smoke",
+      "done_when": "Phase 1 checklist in master spec \u00a734.2 fully ticked and signed in PROGRESS.md",
+      "fr": [
+        "FR-NFR-001"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.1",
+      "phase": 2,
+      "title": "Disputes: intake, fund freeze, evidence, outcomes, ratio",
+      "depends_on": [
+        "S1.11",
+        "S1.13",
+        "S1.14"
+      ],
+      "files": [
+        "supabase/migrations/0022_disputes.sql",
+        "src/features/disputes/service.ts",
+        "src/app/(merchant)/app/disputes/[id]/page.tsx"
+      ],
+      "verify": "pnpm test:integration --grep dispute && pnpm test:e2e --grep \"dispute evidence\"",
+      "done_when": "intake\u2192evidence\u2192submit\u2192won on both paths with correct ledger; ratio alert fires",
+      "fr": [
+        "FR-DSP-001",
+        "FR-DSP-002",
+        "FR-DSP-003",
+        "FR-DSP-004",
+        "FR-DSP-005",
+        "FR-DSP-006",
+        "FR-DSP-007",
+        "FR-DSP-008",
+        "FR-DSP-009",
+        "FR-DSP-010"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.2",
+      "phase": 2,
+      "title": "Reserves, negative balances, dunning, write-off",
+      "depends_on": [
+        "S1.14",
+        "S2.1"
+      ],
+      "files": [
+        "supabase/migrations/0023_negative_balance.sql",
+        "src/features/reserves/engine.ts"
+      ],
+      "verify": "pnpm test:integration --grep \"reserve|negative\"",
+      "done_when": "release on day N; release blocked by open dispute; write-off needs two approvers",
+      "fr": [
+        "FR-PYT-008",
+        "FR-PYT-011"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.3",
+      "phase": 2,
+      "title": "Ledger operations: adjustments and period close",
+      "depends_on": [
+        "S1.5",
+        "S1.13"
+      ],
+      "files": [
+        "supabase/migrations/0024_ledger_ops.sql",
+        "src/features/ledger/adjustments.ts"
+      ],
+      "verify": "pnpm test:integration --grep \"adjustment|period\"",
+      "done_when": "post into closed period fails; reopen needs two approvals; chain verifies after adjustment",
+      "fr": [
+        "FR-LDG-007",
+        "FR-LDG-008",
+        "FR-LDG-010"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.4",
+      "phase": 2,
+      "title": "Plans, subscriptions, entitlements and fee reporting",
+      "depends_on": [
+        "S1.6",
+        "S1.11",
+        "S1.12"
+      ],
+      "files": [
+        "supabase/migrations/0025_billing_scale.sql",
+        "src/features/billing/subscriptions.ts",
+        "src/features/billing/entitlements.ts"
+      ],
+      "verify": "pnpm test:integration --grep \"subscription|entitlement\"",
+      "done_when": "proration table passes; over-limit returns typed error; fee report ties to ledger",
+      "fr": [
+        "FR-FEE-001",
+        "FR-FEE-002",
+        "FR-FEE-005",
+        "FR-FEE-006",
+        "FR-FEE-007",
+        "FR-FEE-008"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.5",
+      "phase": 2,
+      "title": "Tax scale: reports, exemptions, jurisdiction data",
+      "depends_on": [
+        "S1.7",
+        "S2.6"
+      ],
+      "files": [
+        "supabase/migrations/0026_tax_scale.sql",
+        "src/features/tax/reports.ts",
+        "src/features/tax/exemptions.ts"
+      ],
+      "verify": "pnpm test:integration --grep tax",
+      "done_when": "report totals equal sum(invoice_tax_lines); expired exemption stops applying",
+      "fr": [
+        "FR-TAX-005",
+        "FR-TAX-006"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.6",
+      "phase": 2,
+      "title": "Reports, exports and statements at scale",
+      "depends_on": [
+        "S1.20",
+        "S2.4"
+      ],
+      "files": [
+        "supabase/migrations/0027_reports.sql",
+        "src/features/reports/queries.ts",
+        "src/features/reports/export.ts"
+      ],
+      "verify": "pnpm test:integration --grep reports && pnpm test:e2e --grep reports",
+      "done_when": "report totals equal ledger aggregates; 100k-row export streams under memory ceiling",
+      "fr": [
+        "FR-RPT-001",
+        "FR-RPT-002",
+        "FR-RPT-003",
+        "FR-RCN-008"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.7",
+      "phase": 2,
+      "title": "SDKs, public API docs and sandbox simulator",
+      "depends_on": [
+        "S1.19",
+        "S1.12"
+      ],
+      "files": [
+        "packages/sdk-node/package.json",
+        "packages/sdk-embed/package.json",
+        "docs/api/openapi.yaml",
+        "src/app/(marketing)/docs/api/page.tsx"
+      ],
+      "verify": "pnpm --filter @kdpay/node test && pnpm test:e2e --grep embed && node scripts/check-links.mjs docs/api",
+      "done_when": "quickstart in docs runs verbatim against sandbox",
+      "fr": [
+        "FR-SDK-001",
+        "FR-SDK-002",
+        "FR-SDK-003",
+        "FR-API-007",
+        "FR-API-008",
+        "FR-API-009"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.8",
+      "phase": 2,
+      "title": "WooCommerce plugin v1",
+      "depends_on": [
+        "S2.7"
+      ],
+      "files": [
+        "plugins/woocommerce/kdpay-woocommerce.php",
+        "plugins/woocommerce/readme.txt",
+        "plugins/woocommerce/includes/class-wc-gateway-kdpay.php"
+      ],
+      "verify": "pnpm test:woo",
+      "done_when": "dockerized WP: pay, decline, refund all correct; replay ignored",
+      "fr": [
+        "FR-WOO-001",
+        "FR-WOO-002",
+        "FR-WOO-003",
+        "FR-WOO-004",
+        "FR-WOO-005",
+        "FR-WOO-006",
+        "FR-WOO-007",
+        "FR-WOO-008"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.9",
+      "phase": 2,
+      "title": "CMS finalize: blog, media, navigation, legal, docs",
+      "depends_on": [
+        "S0.11",
+        "S1.17"
+      ],
+      "files": [
+        "supabase/migrations/0029_cms_scale.sql",
+        "src/features/cms/blog.tsx",
+        "src/app/(marketing)/blog/[slug]/page.tsx"
+      ],
+      "verify": "pnpm test:e2e --grep cms && node scripts/check-links.mjs src/app/(marketing)",
+      "done_when": "scheduled publish flips on time; legal re-acceptance blocks payment until accepted",
+      "fr": [
+        "FR-CMS-002",
+        "FR-CMS-003",
+        "FR-CMS-004",
+        "FR-CMS-005",
+        "FR-CMS-006",
+        "FR-CMS-009",
+        "FR-CMS-010"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.10",
+      "phase": 2,
+      "title": "Support system: tickets, SLA, CSAT",
+      "depends_on": [
+        "S1.18",
+        "S1.17"
+      ],
+      "files": [
+        "supabase/migrations/0030_support_scale.sql",
+        "src/features/support/tickets.ts",
+        "src/app/(merchant)/app/support/page.tsx"
+      ],
+      "verify": "pnpm test:integration --grep ticket && pnpm test:e2e --grep support",
+      "done_when": "SLA timers correct across timezones; internal note invisible to merchant",
+      "fr": [
+        "FR-SUP-001",
+        "FR-SUP-002",
+        "FR-SUP-003"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.11",
+      "phase": 2,
+      "title": "Email at scale: promotional separation, templates, delivery logs",
+      "depends_on": [
+        "S1.18"
+      ],
+      "files": [
+        "supabase/migrations/0031_email_scale.sql",
+        "src/lib/email/templates/editor.tsx",
+        "src/app/api/webhooks/email/[provider]/route.ts"
+      ],
+      "verify": "pnpm test:integration --grep email && node scripts/check-email-auth.mjs",
+      "done_when": "marketing suppression does not block receipts; hard bounce suppresses",
+      "fr": [
+        "FR-EML-002",
+        "FR-EML-003",
+        "FR-EML-004"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.12",
+      "phase": 2,
+      "title": "Compliance at scale: KYC, ongoing monitoring, periodic review",
+      "depends_on": [
+        "S1.3",
+        "S2.1"
+      ],
+      "files": [
+        "supabase/migrations/0032_compliance_monitoring.sql",
+        "src/features/compliance/monitoring.ts",
+        "src/features/compliance/reviews.ts"
+      ],
+      "verify": "pnpm test:integration --grep \"monitoring|review\"",
+      "done_when": "seeded merchant trips a rule, review task created, charges disabled at final escalation",
+      "fr": [
+        "FR-KYB-007",
+        "FR-KYB-011",
+        "FR-KYB-012"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.13",
+      "phase": 2,
+      "title": "Catalog and invoice extras",
+      "depends_on": [
+        "S1.7",
+        "S1.9"
+      ],
+      "files": [
+        "supabase/migrations/0033_catalog_extras.sql",
+        "src/features/catalog/import.ts",
+        "src/features/invoices/reminders.ts"
+      ],
+      "verify": "pnpm test:integration --grep \"catalog|partial|reminder\"",
+      "done_when": "5000-row import completes; invoice paid in three parts closes exactly once",
+      "fr": [
+        "FR-INV-012",
+        "FR-INV-013",
+        "FR-INV-014",
+        "FR-INV-016"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.14",
+      "phase": 2,
+      "title": "Payment extras: wallets, partial capture, retries, offline payments",
+      "depends_on": [
+        "S1.11",
+        "S1.13"
+      ],
+      "files": [
+        "supabase/migrations/0034_payment_extras.sql",
+        "src/features/payments/capture.ts",
+        "src/features/payments/offline.ts"
+      ],
+      "verify": "pnpm test:integration --grep \"capture|offline|wallet\"",
+      "done_when": "partial capture math + ledger correct; offline payment above threshold needs approval",
+      "fr": [
+        "FR-PAY-010",
+        "FR-PAY-011",
+        "FR-PAY-012",
+        "FR-PAY-014"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.15",
+      "phase": 2,
+      "title": "Admin consoles: risk, finance, processors, countries",
+      "depends_on": [
+        "S1.16",
+        "S2.3",
+        "S2.12"
+      ],
+      "files": [
+        "supabase/migrations/0035_admin_scale.sql",
+        "src/app/(admin)/admin/risk/page.tsx",
+        "src/app/(admin)/admin/processors/page.tsx"
+      ],
+      "verify": "pnpm test:e2e --grep admin",
+      "done_when": "block card / disable processor / turn off country each audited, no deploy",
+      "fr": [
+        "FR-ADM-005",
+        "FR-ADM-007",
+        "FR-ADM-008",
+        "FR-ADM-012"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.16",
+      "phase": 2,
+      "title": "UX scale: dark mode, full Bangla parity, a11y and performance gates",
+      "depends_on": [
+        "S1.15",
+        "S1.16",
+        "S1.17"
+      ],
+      "files": [
+        "src/app/globals.css",
+        "messages/bn.json",
+        "tests/a11y/routes.spec.ts",
+        "lighthouserc.json"
+      ],
+      "verify": "pnpm test:a11y && pnpm test:lighthouse && pnpm i18n:lint",
+      "done_when": "zero critical/serious axe issues; every route inside its budget; no missing BN key",
+      "fr": [
+        "FR-UX-004",
+        "FR-UX-005",
+        "FR-NFR-008"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.17",
+      "phase": 2,
+      "title": "Activity feed, retention and DSAR",
+      "depends_on": [
+        "S0.9",
+        "S1.15"
+      ],
+      "files": [
+        "supabase/migrations/0036_retention.sql",
+        "src/features/privacy/dsar.ts",
+        "src/app/(merchant)/app/activity/page.tsx"
+      ],
+      "verify": "pnpm test:integration --grep \"retention|dsar\"",
+      "done_when": "feed excludes internal fields; purge respects legal hold; DSAR zip contains only that tenant",
+      "fr": [
+        "FR-AUD-006",
+        "FR-SEC-017"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S2.18",
+      "phase": 2,
+      "title": "Phase 2 hardening, pentest and load",
+      "depends_on": [
+        "S2.1",
+        "S2.6",
+        "S2.7",
+        "S2.8",
+        "S2.9",
+        "S2.10",
+        "S2.11",
+        "S2.12",
+        "S2.13",
+        "S2.14",
+        "S2.15",
+        "S2.16",
+        "S2.17"
+      ],
+      "files": [
+        "tests/load/checkout.js",
+        "tests/load/soak.js",
+        "docs/PENTEST.md"
+      ],
+      "verify": "pnpm test:load:phase2",
+      "done_when": "zero open highs; load + soak targets met; RTO recorded",
+      "fr": [
+        "FR-SEC-015"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S3.1",
+      "phase": 3,
+      "title": "Multi-processor routing and failover",
+      "depends_on": [
+        "S1.10",
+        "S2.14"
+      ],
+      "files": [
+        "src/lib/processors/router.ts",
+        "src/lib/processors/circuit-breaker.ts"
+      ],
+      "verify": "pnpm test:integration --grep \"routing|failover\"",
+      "done_when": "killing the primary in staging still completes a checkout with one ledger transaction",
+      "fr": [
+        "FR-PAY-013"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S3.2",
+      "phase": 3,
+      "title": "FX and cross-border payouts",
+      "depends_on": [
+        "S1.14",
+        "S3.1"
+      ],
+      "files": [
+        "src/features/payouts/fx.ts",
+        "src/lib/pdf/remittance-advice.ts"
+      ],
+      "verify": "pnpm test:integration --grep \"fx|corridor\"",
+      "done_when": "quote expiry; spread balances; remittance advice ties to ledger",
+      "fr": [
+        "FR-LDG-012"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S3.3",
+      "phase": 3,
+      "title": "Tax reporting: 1099-K / 1042-S, withholding, engine adapter",
+      "depends_on": [
+        "S1.3",
+        "S2.5"
+      ],
+      "files": [
+        "src/features/tax/filing.ts",
+        "src/lib/tax/engines/index.ts"
+      ],
+      "verify": "pnpm test:integration --grep \"filing|withholding\"",
+      "done_when": "seeded year produces 1099-K data tying to ledger; 1042-S accepted by sandbox filer",
+      "fr": [
+        "FR-TAX-002",
+        "FR-TAX-003",
+        "FR-TAX-007",
+        "FR-TAX-008"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S3.4",
+      "phase": 3,
+      "title": "Passkeys (WebAuthn) and stronger MFA",
+      "depends_on": [
+        "S0.6"
+      ],
+      "files": [
+        "supabase/migrations/0040_webauthn.sql",
+        "src/lib/security/webauthn.ts",
+        "src/app/(merchant)/security/passkeys/page.tsx"
+      ],
+      "verify": "pnpm test:integration --grep webauthn && pnpm test:e2e --grep passkey",
+      "done_when": "enroll + sign in with virtual authenticator; cloned-credential simulation rejected",
+      "fr": [
+        "FR-SEC-016"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S3.5",
+      "phase": 3,
+      "title": "Bank confirmation matching",
+      "depends_on": [
+        "S1.20",
+        "S1.14"
+      ],
+      "files": [
+        "supabase/migrations/0041_bank_confirmations.sql",
+        "src/features/reconciliation/bank-import.ts"
+      ],
+      "verify": "pnpm test:integration --grep bank",
+      "done_when": "month of statements matches 100% of payouts; three-way report shows zero unexplained",
+      "fr": [
+        "FR-RCN-007"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S3.6",
+      "phase": 3,
+      "title": "Audit WORM export and 7-year retention",
+      "depends_on": [
+        "S0.9",
+        "S2.17"
+      ],
+      "files": [
+        "scripts/verify-audit.ts",
+        "docs/AUDIT-EXPORT.md"
+      ],
+      "verify": "pnpm verify:audit --bundle ./tmp/bundle",
+      "done_when": "auditor verifies a month with the CLI and the public key alone",
+      "fr": [
+        "FR-AUD-005"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S3.7",
+      "phase": 3,
+      "title": "Lifecycle marketing, digests and scheduled reports",
+      "depends_on": [
+        "S2.11",
+        "S2.6"
+      ],
+      "files": [
+        "src/lib/notifications/digest.ts",
+        "src/features/reports/schedules.ts",
+        "src/features/billing/waivers.ts"
+      ],
+      "verify": "pnpm test:integration --grep \"digest|schedule|waiver\"",
+      "done_when": "one digest instead of 12 emails; weekly report with working signed link",
+      "fr": [
+        "FR-NTF-004",
+        "FR-RPT-004",
+        "FR-FEE-009"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "S3.8",
+      "phase": 3,
+      "title": "Enterprise readiness and scale",
+      "depends_on": [
+        "S3.1",
+        "S3.2",
+        "S3.3",
+        "S3.4",
+        "S3.5",
+        "S3.6",
+        "S3.7"
+      ],
+      "files": [
+        "docs/compliance/soc2-controls.md",
+        "src/lib/auth/sso.ts",
+        "supabase/migrations/0042_partitioning.sql"
+      ],
+      "verify": "pnpm test:e2e --grep sso && node scripts/check-partitions.mjs",
+      "done_when": "SSO + custom domain work; failover drill met RTO",
+      "fr": [],
+      "status": "pending"
+    }
+  ]
+}
