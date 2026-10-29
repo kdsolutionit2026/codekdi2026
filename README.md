@@ -11,6 +11,8 @@
 |---|---|
 | **[docs/MASTER_SPECIFICATION.md](docs/MASTER_SPECIFICATION.md)** | The authoritative, contradiction-free master specification: product, compliance, architecture, full database schema, double-entry ledger, RBAC, payments/risk, security, UI/UX, API, 3-phase plan, and a 241-row traceability matrix. |
 | **[spec.md](spec.md)** | The **executable build plan** for AI agents: **60 ordered steps** (13 foundation, 21 money-in, 18 money-out/scale, 8 global) with exact files, commands, tests, verification gates, 20 copy-paste recipes, and 29 pitfalls that break real deployments. Appendix B maps all 241 requirements to their owner step. Start here when coding. |
+| [docs/AGENT_PLAYBOOK.md](docs/AGENT_PLAYBOOK.md) | **How to run the build with an AI agent**: which agent, the session loop, the evidence standard, how to cross-check that features actually work, and the failure modes to watch for. |
+| [docs/reviews/](docs/reviews/) | One review file per step — the audit trail proving each step was verified by a second session. |
 | [docs/steps.json](docs/steps.json) | Machine-readable registry of all 60 steps: dependencies, files that must exist, verify command, owned FRs, status. The agent reads it to know what to do next. |
 | [docs/PROGRESS.md](docs/PROGRESS.md) | Live build tracker: current step, last session's results, environment versions. The agent updates it every session. |
 | [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) | Business/legal decisions that must be closed before live traffic. |

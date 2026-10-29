@@ -13,6 +13,12 @@
 
 ## Log (newest first)
 
+### 2026-10-29 — agent operating procedure
+- Done: `docs/AGENT_PLAYBOOK.md` (agent selection, session loop, evidence standard, cross-check techniques, failure modes) + `docs/reviews/README.md`
+- Verified in sandbox: PostgreSQL 18.4 runs locally via npm-bundled binaries (`embedded-postgres`) — schema, triggers, constraints and RLS are testable without Docker or the Supabase CLI
+- Gate: check-docs 0 · check-fr 241/241 · check-steps --strict 0
+- Next: S0.1
+
 ### 2026-10-29 — planning
 - Done: master specification v1.0.0 (`docs/MASTER_SPECIFICATION.md`); build plan v1.1.0 (`spec.md`) — 60 steps, Appendix B requirement map (241/241 owned), Phase 2/3 packets, security/ops steps S0.12/S0.13
 - Gate: `node scripts/check-docs.mjs` 0 problems · `node scripts/check-fr-coverage.mjs` 241/241 · `node scripts/check-steps.mjs --strict` exit 0

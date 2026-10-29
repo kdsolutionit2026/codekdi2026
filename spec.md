@@ -817,7 +817,7 @@ export async function asUser<T>(userId: string, fn: (tx: Tx) => Promise<T>) {
 ### S0.13 — Operations baseline: backups, restore drill, runbooks, incident response
 
 **Goal:** the boring guarantees that decide whether an outage is an incident or a footnote.
-**Depends on:** S0.3, S0.9. **Master spec:** §36.1–§36.4, §5.7, `FR-NFR-003`, `FR-NFR-004`, `FR-NFR-007`, `FR-SEC-019`. **Effort:** 1 day.
+**Depends on:** S0.3, S0.9. **Master spec:** §36.1–§36.4, §5.7, `FR-NFR-003`, `FR-NFR-004`, `FR-NFR-007`, `FR-SEC-019`. **Effort:** 1 agent-day.
 **Features:** `FR-NFR-003`, `FR-NFR-004`, `FR-NFR-007`, `FR-SEC-019`.
 
 **Build**
@@ -2440,7 +2440,7 @@ Use master spec Appendix G verbatim. Do not launch with any unchecked security, 
 
 ## 12. Per-step prompt template
 
-Paste this into the AI agent for every step. Replace the bracketed parts.
+Paste this into the AI agent for every step. Replace the bracketed parts. The surrounding procedure — which agent, the review loop, the evidence standard and how to prove a feature works — is in [`docs/AGENT_PLAYBOOK.md`](docs/AGENT_PLAYBOOK.md).
 
 ```text
 ROLE: Implementation engineer for KD PAY (PayFac platform).
