@@ -1,7 +1,7 @@
 # Speaker notes — KD PAY × Airwallex
 
 Compiled from the notes pane of `KD-PAY-Airwallex-Partnership.pptx`. The same text is embedded in the
-deck, so Presenter View shows it while you speak. Numbers in brackets are rough timings for a 25-minute slot.
+deck, so Presenter View shows it while you speak. Timings in brackets assume a 25-minute slot.
 
 ---
 
