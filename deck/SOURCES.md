@@ -18,7 +18,7 @@ this deck is invented and presented as fact.
 | **B2B and B2C**, card-not-present, USD-first | 3, 4 | Your brief ("private merchant accounts for B2B & B2C"). USD-first is stated on the slides as the current norm; correct it if a material share settles in EUR/GBP. |
 | Asia-first, then global | 1, 6, 15 | Your brief. |
 | Phase 1 = hosted checkout, Shopify/WooCommerce plugins, REST API | 7 | Your brief. |
-| Website **kdsolutionit.com** | 3 only | Your brief. Deliberately *not* shown as a live product URL anywhere else — the site is under development, so the deck says "operating history" rather than "visit our site". |
+| Website **kdsolutionit.com** | *not shown* | Your brief supplied it, but the site is under development, so the deck deliberately omits the URL and says "pre-launch, design-partner stage" instead. Give the URL verbally if asked. |
 
 ## B. Claims sourced from Airwallex's public documentation
 

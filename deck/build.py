@@ -95,16 +95,29 @@ intro = ("KD PAY LLC is a US-registered payment platform for Asian merchants tha
 ih = text_h(intro, left_w, 13.5, spacing=1.35)
 text(s, ML, y + 0.05, left_w, ih + 0.1, intro, size=13.5, color=TEXT, spacing=1.35)
 paras = [
- ("Operating history. ", "Since 2022 through KD Solution IT (kdsolutionit.com). KD PAY LLC is the new "
-  "contracting and processing entity, registered October 2026."),
+ ("Operating history. ", "Since 2022 through our operating company, KD Solution IT. KD PAY LLC is the "
+  "new contracting and processing entity, registered October 2026."),
  ("Today. ", "We process through private merchant accounts at incumbent providers — B2B and B2C, "
   "card-not-present, USD-first."),
  ("Why change now. ", "Private accounts cannot deliver Asian coverage, local payment methods or the "
   "economics that let us scale. We are consolidating onto one platform relationship."),
- ("How we work. ", "A small engineering team that ships. We build on a written specification: "
-  "double-entry ledger, row-level tenant isolation, hash-chained audit trail — not a white-label reseller."),
+ ("How we work. ", "A small team that ships, against a written specification: double-entry ledger, "
+  "row-level tenant isolation, hash-chained audit trail — not a white-label reseller."),
 ]
 para_list(s, ML, y + 0.05 + ih + 0.30, left_w, 2.9, paras, size=11.5, gap=9)
+
+# small factual timeline under the copy
+tly = y + 3.72
+hline(s, ML, tly, left_w - 0.3, color=LINE, weight=0.8)
+tl_items = [("2022", "Trading starts under KD Solution IT"),
+            ("Oct 2026", "KD PAY LLC registered"),
+            ("Next", "Platform launch on Airwallex")]
+for i, (when, what) in enumerate(tl_items):
+    x = ML + i * ((left_w - 0.3) / 3)
+    rect(s, x, tly - 0.045, 0.11, 0.11, fill=ACCENT, radius=0.5)
+    text(s, x, tly + 0.16, (left_w - 0.3) / 3 - 0.3, 0.22, when.upper(), size=8.5, bold=True,
+         color=ACCENT_D, tracking=1.1)
+    text(s, x, tly + 0.38, (left_w - 0.3) / 3 - 0.3, 0.42, what, size=9.3, color=MUTED, spacing=1.18)
 
 # right rail: facts
 rx = ML + left_w + 0.55
@@ -114,7 +127,7 @@ text(s, rx + 0.3, y + 0.25, rw - 0.6, 0.24, "At a glance", size=9.5, color=MUTED
      caps=True, tracking=1.4)
 facts = [("Legal entity", "KD PAY LLC (US)"),
          ("Operating since", "2022"),
-         ("Website", "kdsolutionit.com"),
+         ("Product stage", "Pre-launch, design-partner stage"),
          ("Monthly volume", "≈ $800,000"),
          ("Chargeback ratio", "0.01%"),
          ("Mix", "B2B and B2C, card-not-present"),
