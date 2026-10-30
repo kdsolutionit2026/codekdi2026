@@ -1,9 +1,13 @@
 # Sources, assumptions and open questions
 
-Purpose: every number and every capability claim on a slide should be traceable to one of four places —
-**(A)** a figure you supplied, **(B)** a public Airwallex document, **(C)** a widely published industry
-rule of thumb, or **(D)** an assumption we are making and should say out loud in the meeting. Nothing in
-this deck is invented and presented as fact.
+Applies to **both** decks in this folder:
+
+- `KD-PAY-Airwallex-White-Label-Proposal.pptx` — the business-model deck (17 slides). **Use this one.**
+- `KD-PAY-Airwallex-Partnership.pptx` — the earlier product-focused deck (18 slides), kept for internal reference.
+
+The rules are the same in both: every number is either yours, Airwallex's published documentation, a
+widely published industry rule of thumb **(C)**, or an assumption we say out loud **(D)**. Nothing is
+presented as fact unless it can be traced below.
 
 ---
 
@@ -51,6 +55,25 @@ this deck is invented and presented as fact.
 | Top **20%** of merchants migrate to connected accounts in year 2 | 10 | Illustrative segmentation to show we understand the cost trade-off. Not modelled. |
 | `0.01%` will be believed without third-party verification | 4, 11, 18 | The processing history sits with the predecessor entity. Slide 18 discloses this and offers statements + references under NDA. **Do not skip that slide if the meeting runs long.** |
 | Reserve terms, dispute fees and pricing are all open | 2, 11, 16, 18 | We are asking, not quoting. No Airwallex price appears anywhere in the deck — deliberately. |
+
+## E. Extra assumptions that only appear in the white-label deck
+
+| Assumption | Slide | Why it matters |
+|---|---|---|
+| **Three possible structures** — A: KD PAY is white-label + merchant of record; B: KD PAY is white-label but Airwallex holds MOR; C: connected accounts per merchant | 9 | These are *proposals*, not known Airwallex products. Ask which of the three they will actually approve; the whole deck is written so it still works if the answer is B. |
+| **Take-rate scenarios of 1.0% / 1.5% / 2.0%** applied to $800K, $2M, $5M, $10M monthly volume | 7, 11 | Pure arithmetic we invented to show the shape of the business — the table says "Illustrative only". Airwallex pricing is unknown, so the split between our margin and their fee is not shown anywhere. |
+| **$2M run-rate ambition by month 12** | 15 | Our ambition, labelled as ambition on the slide. Not a forecast and not backed by a signed merchant pipeline. |
+| **Two additional merchant-ops staff by month six** | 15 | Our own resourcing plan, funded from the platform subscription line. Not a commitment to Airwallex. |
+| **"White-label ready from day one"** — brand, domain, documents, support | 8, 14 | True of the product design; the *programme* is what we are asking them to approve. Do not imply the agreement exists today. |
+| **Corridor split** (South Asia → South-East Asia → East Asia → EU/UK/US/LatAm) | 6 | Our sequencing, gated on their coverage map — ask #2 on slide 3. |
+| **8-week timeline** (contract → build → certification → pilot → go-live) | 3, 16 | Our plan, contingent on their sandbox access, KYB turnaround and a named solutions engineer. |
+
+## F. What changed from the first deck, and why
+
+The first deck led with the **product** (checkout, architecture, 12 controls). This one leads with the
+**business model**: the proposition, the ask, the revenue model, what white-label actually means, the three
+contract structures, distribution, economics, risk, and then a single commercial security slide. The product
+appears once, on slide 10, framed as the sales channel — which is what it is at this stage.
 
 ## Things the deck deliberately does **not** claim
 
