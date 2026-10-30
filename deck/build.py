@@ -757,6 +757,17 @@ footer(s, 18)
 notes(s, "Ending on the entity issue is deliberate: it is the one thing underwriting will find, so we frame it "
          "before they do. Say we would rather over-share than have it surface late in the process.")
 
+# document properties (visible in File > Info / Finder)
+cp = prs.core_properties
+cp.title = "KD PAY LLC — Airwallex partnership proposal"
+cp.subject = "Payment platform partnership for Asia-first cross-border merchants"
+cp.author = "KD PAY LLC"
+cp.last_modified_by = "KD PAY LLC"
+cp.category = "Partnership proposal"
+cp.keywords = "Airwallex, payments, Asia, cross-border, platform, partnership"
+cp.comments = ("18-slide proposal deck. Figures supplied by KD PAY: $800K monthly volume, 0.01% "
+               "chargeback ratio, operating since 2022. See deck/SOURCES.md for the basis of every claim.")
+
 out = os.path.join(os.path.dirname(__file__), "KD-PAY-Airwallex-Partnership.pptx")
 prs.save(out)
 print("saved", out, "slides:", len(prs.slides.__iter__.__self__._sldIdLst))
