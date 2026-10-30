@@ -7,6 +7,7 @@
 | `KD-PAY-Airwallex-Partnership.pptx` | The deliverable. Open in PowerPoint / Keynote / Google Slides. |
 | `SPEAKER-NOTES.md` | The same notes, readable outside PowerPoint. |
 | `SOURCES.md` | Where every figure and claim comes from, plus what we deliberately do *not* claim. |
+| `preview.jpg` | Contact sheet of all 18 slides (approximate rendering; open the .pptx for the real thing). |
 | `build.py` | Generates the deck from scratch (python-pptx). |
 | `lib.py` | Layout toolkit: palette, type scale, `header()`, `card()`, `table()`, text metrics. |
 | `render.py` | Approximate PPTX → PNG renderer used to check geometry without LibreOffice. |
