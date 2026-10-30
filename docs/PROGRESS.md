@@ -13,6 +13,12 @@
 
 ## Log (newest first)
 
+### 2026-10-30 — component map
+- Done: `docs/COMPONENTS.md` — 10 core components with plain-language purpose, owned tables, dependencies, failure symptoms and owning steps; traced $100 payment end to end; external-service table; glossary; audience guides; build-order/parallelism map; repo map; explicit non-goals
+- Drift fixed while writing it: 7 tables named only in the Phase 2/3 packets (`review_schedules`, `monitoring_events`, `negative_balance_events`, `dunning_attempts`, `write_offs`, `wallet_tokens`, `offline_payments`, `import_jobs`) are now catalogued in master spec §6.16b; DB roles documented in §6.16c
+- Gate: check-docs 0 (now also covers COMPONENTS.md and AGENT_PLAYBOOK.md) · check-fr 241/241 · check-steps --strict 0
+- Next: S0.1
+
 ### 2026-10-29 — agent operating procedure
 - Done: `docs/AGENT_PLAYBOOK.md` (agent selection, session loop, evidence standard, cross-check techniques, failure modes) + `docs/reviews/README.md`
 - Verified in sandbox: PostgreSQL 18.4 runs locally via npm-bundled binaries (`embedded-postgres`) — schema, triggers, constraints and RLS are testable without Docker or the Supabase CLI

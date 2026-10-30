@@ -4,7 +4,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-const files = ['spec.md', 'docs/MASTER_SPECIFICATION.md'].filter((f) => existsSync(new URL(`../${f}`, import.meta.url)));
+const files = ['spec.md', 'docs/MASTER_SPECIFICATION.md', 'docs/COMPONENTS.md', 'docs/AGENT_PLAYBOOK.md'].filter((f) => existsSync(new URL(`../${f}`, import.meta.url)));
 const fail = [];
 const note = (file, msg) => fail.push(`${file}: ${msg}`);
 

@@ -351,7 +351,7 @@ These are observed, not hypothetical. Every one of them has happened on payment 
 | 8 | New dependency added "to save time" | Nothing breaks immediately | Dependency rule (spec §18): one-line justification + license check in the PR; reviewer blocks unrequested deps |
 | 9 | Scope creep: refactors neighbours, renames contracts | Diff looks tidy | Scope check in §4.3; commit per step keeps the blast radius small |
 | 10 | Bengali strings missing or machine-mangled | English looks perfect | `pnpm i18n:lint` key-set equality (S2.16) + screenshot diff per locale |
-| 11 | `TODO` / `throw new Error('not implemented')` left in a shipped path | Tests don't cover that branch | grep for `TODO|not implemented|fixme` as a CI gate on `src/**` |
+| 11 | `TODO` / `throw new Error('not implemented')` left in a shipped path | Tests don't cover that branch | grep for the strings TODO, FIXME or "not implemented" as a CI gate on `src/**` |
 | 12 | Migration edited after it was pushed | Works locally, breaks other environments | CI: migrations are append-only; hash of each file recorded, mismatch fails |
 | 13 | Agent "fixes" a failing RLS test by relaxing the policy | Green tests, broken promise | Policy changes require a reviewer + a line in the PR; the break-it test on the *specific* policy |
 | 14 | Long session drifts: forgets `N-01`, adds card fields | Plausible-looking checkout | Re-brief per step (§4.2 restates hard rules); reviewer checks the FR list, not just the code |

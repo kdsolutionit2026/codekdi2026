@@ -3114,6 +3114,34 @@ RLS implementation rules:
 
 All views are `security_invoker = true` (Postgres 15+) so RLS of underlying tables applies, except the token-based `v_invoice_public` which is exposed only through a `security definer` RPC.
 
+### 6.16b Extension tables introduced by later phases
+
+Phase-1 tables are catalogued in §6.3–§6.13. The following tables are **deliberately deferred**: their columns, constraints and RLS follow the same conventions (§6.1) and are defined in the build plan step that creates them, but they are part of this specification's scope and must not be invented ad hoc by an implementer.
+
+| Table | Domain | Purpose | Created in | Spec ref |
+|---|---|---|---|---|
+| `review_schedules` | Compliance | Periodic KYB/KYC review cadence per merchant (annual / 6-month / quarterly by risk) | S2.12 | §3.6, §19.3 |
+| `monitoring_events` | Compliance | Ongoing-monitoring signals: volume spikes, dispute-ratio breach, refund spikes, MCC/site changes, sanctions re-screens | S2.12 | §17.4 |
+| `negative_balance_events` | Payouts | Detection and lifecycle of a merchant's negative `AVAILABLE` balance (opened, offset applied, suspended, written off) | S2.2 | §10.8 |
+| `dunning_attempts` | Payouts | The escalating sequence for a merchant who owes money (notice → offset → suspend → write-off) | S2.2 | §10.8 |
+| `write_offs` | Payouts | Approved write-off of an uncollectible negative balance (maker-checker, reason, ledger link) | S2.2 | §10.8 |
+| `wallet_tokens` | Payments | Apple Pay / Google Pay token references (still processor-hosted card data, still SAQ-A) | S2.14 | §16.4 |
+| `offline_payments` | Payments | Recorded bank-transfer / wire payments with proof, reference and maker-checker above threshold | S2.14 | §16.9 |
+| `import_jobs` | Commerce | CSV import runs (customers, products) with per-row results and idempotency | S2.13 | §15.8 |
+
+Rule: an implementer may not create a table outside this catalogue plus §6.3–§6.13 plus this table. If a step genuinely needs a new table, this table is updated **first**, in the same change.
+
+### 6.16c Database roles
+
+Two login roles exist for runtime code, both created by migration `0002b_app_roles.sql` and both **non-superuser** (a superuser connection bypasses RLS even after `SET ROLE`, which would silently disable tenant isolation):
+
+| Role | Used by | Privileges |
+|---|---|---|
+| `app_runtime` | `DATABASE_URL` — the Next.js server | login, member of `authenticated`, no superuser, no bypassrls |
+| `app_service` | `DATABASE_URL_SERVICE` — workers, webhook intake, cron | login, member of `service_role` (bypassrls) |
+
+`postgres` is used only by migrations and type generation. Passwords are set per environment (never in a migration). The build plan's §17 adds the proof test that asserts `current_user = 'app_runtime'` and `rolsuper = false` before Phase 1 begins.
+
 ### 6.17 Index, partitioning & retention plan
 
 - **Partition by month** once volume exceeds ~10M rows: `audit.log`, `metrics_events`, `email_log`, `login_attempts`, `processor_webhook_events`. Use `pg_partman` or scheduled `create table ... partition of`.
