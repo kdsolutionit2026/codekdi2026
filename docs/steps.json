@@ -2,14 +2,15 @@
   "version": 1,
   "plan": "spec.md",
   "master_spec": "docs/MASTER_SPECIFICATION.md",
-  "updated": "2026-10-29",
-  "notes": "Machine-readable mirror of spec.md \u00a73\u2013\u00a76. An agent may only start a step whose depends_on are all done. files = the artefacts that must exist for the step to be complete (enforced by scripts/check-steps.mjs). status: pending | in_progress | blocked | done.",
+  "updated": "2026-11-01",
+  "notes": "Machine-readable mirror of spec.md \u00a73\u2013\u00a76. An agent may only start a step whose depends_on are all done. files = the artefacts that must exist for the step to be complete (enforced by scripts/check-steps.mjs). status: pending | in_progress | blocked | done. effort = agent-days for the whole step (from spec.md); the execution split lives in docs/slices.json.",
   "steps": [
     {
       "id": "S0.1",
       "phase": 0,
       "title": "Repository scaffold and toolchain",
       "depends_on": [],
+      "effort": 1.0,
       "files": [
         "package.json",
         "tsconfig.json",
@@ -32,6 +33,7 @@
       "depends_on": [
         "S0.1"
       ],
+      "effort": 0.5,
       "files": [
         ".github/workflows/ci.yml",
         "eslint.config.mjs"
@@ -52,6 +54,7 @@
       "depends_on": [
         "S0.2"
       ],
+      "effort": 1.0,
       "files": [
         "supabase/config.toml",
         "supabase/migrations/0001_extensions_and_schemas.sql",
@@ -70,6 +73,7 @@
       "depends_on": [
         "S0.1"
       ],
+      "effort": 2.0,
       "files": [
         "src/app/globals.css",
         "src/components/ui/button.tsx",
@@ -93,6 +97,7 @@
       "depends_on": [
         "S0.3"
       ],
+      "effort": 1.5,
       "files": [
         "src/lib/db/client.ts",
         "src/lib/db/tenant.ts",
@@ -118,6 +123,7 @@
       "depends_on": [
         "S0.5"
       ],
+      "effort": 2.5,
       "files": [
         "supabase/migrations/0003_identity.sql",
         "src/lib/security/session.ts",
@@ -147,6 +153,7 @@
       "depends_on": [
         "S0.6"
       ],
+      "effort": 2.0,
       "files": [
         "supabase/migrations/0004_rbac.sql",
         "src/lib/actions/action.ts",
@@ -166,6 +173,7 @@
       "depends_on": [
         "S0.7"
       ],
+      "effort": 2.5,
       "files": [
         "supabase/migrations/0004b_rls_helpers.sql",
         "tests/rls/isolation.test.ts",
@@ -187,6 +195,7 @@
       "depends_on": [
         "S0.3"
       ],
+      "effort": 2.0,
       "files": [
         "supabase/migrations/0005_audit.sql",
         "src/lib/audit.ts",
@@ -208,6 +217,7 @@
       "depends_on": [
         "S0.9"
       ],
+      "effort": 2.0,
       "files": [
         "supabase/migrations/0006_jobs_flags.sql",
         "src/lib/jobs/outbox.ts",
@@ -231,6 +241,7 @@
         "S0.4",
         "S0.10"
       ],
+      "effort": 1.5,
       "files": [
         "supabase/migrations/0007_platform_cms.sql",
         "src/features/platform/queries.ts",
@@ -252,6 +263,7 @@
         "S0.6",
         "S0.11"
       ],
+      "effort": 1.5,
       "files": [
         "src/middleware.ts",
         "scripts/check-headers.mjs",
@@ -275,6 +287,7 @@
         "S0.3",
         "S0.9"
       ],
+      "effort": 1.0,
       "files": [
         "docs/runbooks/README.md",
         "docs/ONCALL.md",
@@ -292,12 +305,35 @@
       "status": "pending"
     },
     {
+      "id": "S0.14",
+      "phase": 0,
+      "title": "Interface freeze: the four contracts every later step imports",
+      "depends_on": [
+        "S0.1",
+        "S0.5"
+      ],
+      "effort": 1.0,
+      "files": [
+        "src/lib/money/types.ts",
+        "src/lib/ledger/types.ts",
+        "src/lib/payments/provider.ts",
+        "src/lib/payments/events.ts",
+        "tests/contract/interface-freeze.test.ts",
+        "docs/adr/0001-interface-freeze.md"
+      ],
+      "verify": "pnpm test:contract -- interface-freeze && pnpm typecheck",
+      "done_when": "The four contract files exist as types only, the contract test is green, and renaming a field on a scratch branch makes it red.",
+      "fr": [],
+      "status": "pending"
+    },
+    {
       "id": "S1.1",
       "phase": 1,
       "title": "Merchants, profiles, settings, limits, provisioning",
       "depends_on": [
         "S0.8"
       ],
+      "effort": 2.0,
       "files": [
         "supabase/migrations/0008_merchants.sql",
         "src/features/merchants/queries.ts",
@@ -317,6 +353,7 @@
       "depends_on": [
         "S1.1"
       ],
+      "effort": 3.0,
       "files": [
         "supabase/migrations/0009_kyb.sql",
         "src/features/kyb/wizard.tsx",
@@ -342,6 +379,7 @@
       "depends_on": [
         "S1.2"
       ],
+      "effort": 3.0,
       "files": [
         "supabase/migrations/0010_tax_documents.sql",
         "src/features/compliance/review.tsx",
@@ -369,6 +407,7 @@
       "depends_on": [
         "S1.1"
       ],
+      "effort": 2.5,
       "files": [
         "supabase/migrations/0011_banking.sql",
         "src/features/banking/service.ts"
@@ -390,6 +429,7 @@
       "depends_on": [
         "S1.1"
       ],
+      "effort": 4.0,
       "files": [
         "supabase/migrations/0012_ledger.sql",
         "src/lib/ledger/post.ts",
@@ -415,6 +455,7 @@
       "depends_on": [
         "S1.5"
       ],
+      "effort": 2.5,
       "files": [
         "supabase/migrations/0013_billing.sql",
         "src/features/fees/engine.ts"
@@ -435,6 +476,7 @@
         "S1.5",
         "S1.6"
       ],
+      "effort": 4.0,
       "files": [
         "supabase/migrations/0014_commerce.sql",
         "src/features/invoices/service.ts",
@@ -463,6 +505,7 @@
       "depends_on": [
         "S1.7"
       ],
+      "effort": 3.0,
       "files": [
         "src/lib/pdf/invoice.ts",
         "src/lib/pdf/guilloche.ts",
@@ -484,6 +527,7 @@
         "S1.7",
         "S1.10"
       ],
+      "effort": 4.0,
       "files": [
         "supabase/migrations/0014b_payment_links.sql",
         "src/app/(checkout)/pay/[token]/page.tsx",
@@ -513,6 +557,7 @@
       "depends_on": [
         "S1.5"
       ],
+      "effort": 3.0,
       "files": [
         "src/lib/processors/types.ts",
         "src/lib/processors/registry.ts",
@@ -539,6 +584,7 @@
         "S1.9",
         "S1.10"
       ],
+      "effort": 5.0,
       "files": [
         "supabase/migrations/0015_payments.sql",
         "src/features/payments/service.ts",
@@ -566,6 +612,7 @@
         "S1.10",
         "S1.11"
       ],
+      "effort": 3.0,
       "files": [
         "supabase/migrations/0016_webhooks.sql",
         "src/lib/webhooks/sign.ts",
@@ -587,6 +634,7 @@
       "depends_on": [
         "S1.11"
       ],
+      "effort": 3.0,
       "files": [
         "supabase/migrations/0017_refunds.sql",
         "src/features/refunds/service.ts"
@@ -615,6 +663,7 @@
         "S1.11",
         "S1.13"
       ],
+      "effort": 4.0,
       "files": [
         "supabase/migrations/0018_payouts.sql",
         "src/features/payouts/eligibility.ts",
@@ -647,6 +696,7 @@
         "S1.13",
         "S1.14"
       ],
+      "effort": 5.0,
       "files": [
         "src/app/(merchant)/app/page.tsx",
         "src/features/merchant/queries.ts",
@@ -669,6 +719,7 @@
         "S1.4",
         "S1.14"
       ],
+      "effort": 5.0,
       "files": [
         "src/app/(admin)/admin/page.tsx",
         "src/features/admin/queries.ts",
@@ -696,6 +747,7 @@
       "depends_on": [
         "S0.11"
       ],
+      "effort": 5.0,
       "files": [
         "src/app/(marketing)/[slug]/page.tsx",
         "src/features/cms/queries.ts",
@@ -718,6 +770,7 @@
         "S1.11",
         "S1.14"
       ],
+      "effort": 3.0,
       "files": [
         "supabase/migrations/0019_support_notifications.sql",
         "src/lib/email/transport.ts",
@@ -742,6 +795,7 @@
         "S1.11",
         "S1.12"
       ],
+      "effort": 5.0,
       "files": [
         "supabase/migrations/0020_api_keys.sql",
         "src/app/api/v1/[...path]/route.ts",
@@ -766,6 +820,7 @@
         "S1.11",
         "S1.14"
       ],
+      "effort": 4.0,
       "files": [
         "supabase/migrations/0021_reconciliation.sql",
         "src/features/reconciliation/match.ts",
@@ -796,6 +851,7 @@
         "S1.19",
         "S1.20"
       ],
+      "effort": 6.0,
       "files": [
         "scripts/smoke.ts",
         "tests/e2e/critical.spec.ts",
@@ -817,6 +873,7 @@
         "S1.13",
         "S1.14"
       ],
+      "effort": 6.0,
       "files": [
         "supabase/migrations/0022_disputes.sql",
         "src/features/disputes/service.ts",
@@ -846,6 +903,7 @@
         "S1.14",
         "S2.1"
       ],
+      "effort": 4.0,
       "files": [
         "supabase/migrations/0023_negative_balance.sql",
         "src/features/reserves/engine.ts"
@@ -866,6 +924,7 @@
         "S1.5",
         "S1.13"
       ],
+      "effort": 4.0,
       "files": [
         "supabase/migrations/0024_ledger_ops.sql",
         "src/features/ledger/adjustments.ts"
@@ -888,6 +947,7 @@
         "S1.11",
         "S1.12"
       ],
+      "effort": 5.0,
       "files": [
         "supabase/migrations/0025_billing_scale.sql",
         "src/features/billing/subscriptions.ts",
@@ -913,6 +973,7 @@
         "S1.7",
         "S2.6"
       ],
+      "effort": 3.0,
       "files": [
         "supabase/migrations/0026_tax_scale.sql",
         "src/features/tax/reports.ts",
@@ -934,6 +995,7 @@
         "S1.20",
         "S2.4"
       ],
+      "effort": 5.0,
       "files": [
         "supabase/migrations/0027_reports.sql",
         "src/features/reports/queries.ts",
@@ -957,6 +1019,7 @@
         "S1.19",
         "S1.12"
       ],
+      "effort": 6.0,
       "files": [
         "packages/sdk-node/package.json",
         "packages/sdk-embed/package.json",
@@ -982,6 +1045,7 @@
       "depends_on": [
         "S2.7"
       ],
+      "effort": 8.0,
       "files": [
         "plugins/woocommerce/kdpay-woocommerce.php",
         "plugins/woocommerce/readme.txt",
@@ -1009,6 +1073,7 @@
         "S0.11",
         "S1.17"
       ],
+      "effort": 6.0,
       "files": [
         "supabase/migrations/0029_cms_scale.sql",
         "src/features/cms/blog.tsx",
@@ -1035,6 +1100,7 @@
         "S1.18",
         "S1.17"
       ],
+      "effort": 4.0,
       "files": [
         "supabase/migrations/0030_support_scale.sql",
         "src/features/support/tickets.ts",
@@ -1056,6 +1122,7 @@
       "depends_on": [
         "S1.18"
       ],
+      "effort": 4.0,
       "files": [
         "supabase/migrations/0031_email_scale.sql",
         "src/lib/email/templates/editor.tsx",
@@ -1078,6 +1145,7 @@
         "S1.3",
         "S2.1"
       ],
+      "effort": 6.0,
       "files": [
         "supabase/migrations/0032_compliance_monitoring.sql",
         "src/features/compliance/monitoring.ts",
@@ -1100,6 +1168,7 @@
         "S1.7",
         "S1.9"
       ],
+      "effort": 4.0,
       "files": [
         "supabase/migrations/0033_catalog_extras.sql",
         "src/features/catalog/import.ts",
@@ -1123,6 +1192,7 @@
         "S1.11",
         "S1.13"
       ],
+      "effort": 5.0,
       "files": [
         "supabase/migrations/0034_payment_extras.sql",
         "src/features/payments/capture.ts",
@@ -1147,6 +1217,7 @@
         "S2.3",
         "S2.12"
       ],
+      "effort": 5.0,
       "files": [
         "supabase/migrations/0035_admin_scale.sql",
         "src/app/(admin)/admin/risk/page.tsx",
@@ -1171,6 +1242,7 @@
         "S1.16",
         "S1.17"
       ],
+      "effort": 6.0,
       "files": [
         "src/app/globals.css",
         "messages/bn.json",
@@ -1194,6 +1266,7 @@
         "S0.9",
         "S1.15"
       ],
+      "effort": 3.0,
       "files": [
         "supabase/migrations/0036_retention.sql",
         "src/features/privacy/dsar.ts",
@@ -1226,6 +1299,7 @@
         "S2.16",
         "S2.17"
       ],
+      "effort": 6.0,
       "files": [
         "tests/load/checkout.js",
         "tests/load/soak.js",
@@ -1246,6 +1320,7 @@
         "S1.10",
         "S2.14"
       ],
+      "effort": 8.0,
       "files": [
         "src/lib/processors/router.ts",
         "src/lib/processors/circuit-breaker.ts"
@@ -1265,6 +1340,7 @@
         "S1.14",
         "S3.1"
       ],
+      "effort": 10.0,
       "files": [
         "src/features/payouts/fx.ts",
         "src/lib/pdf/remittance-advice.ts"
@@ -1284,6 +1360,7 @@
         "S1.3",
         "S2.5"
       ],
+      "effort": 10.0,
       "files": [
         "src/features/tax/filing.ts",
         "src/lib/tax/engines/index.ts"
@@ -1305,6 +1382,7 @@
       "depends_on": [
         "S0.6"
       ],
+      "effort": 5.0,
       "files": [
         "supabase/migrations/0040_webauthn.sql",
         "src/lib/security/webauthn.ts",
@@ -1325,6 +1403,7 @@
         "S1.20",
         "S1.14"
       ],
+      "effort": 5.0,
       "files": [
         "supabase/migrations/0041_bank_confirmations.sql",
         "src/features/reconciliation/bank-import.ts"
@@ -1344,6 +1423,7 @@
         "S0.9",
         "S2.17"
       ],
+      "effort": 4.0,
       "files": [
         "scripts/verify-audit.ts",
         "docs/AUDIT-EXPORT.md"
@@ -1363,6 +1443,7 @@
         "S2.11",
         "S2.6"
       ],
+      "effort": 5.0,
       "files": [
         "src/lib/notifications/digest.ts",
         "src/features/reports/schedules.ts",
@@ -1390,6 +1471,7 @@
         "S3.6",
         "S3.7"
       ],
+      "effort": 15.0,
       "files": [
         "docs/compliance/soc2-controls.md",
         "src/lib/auth/sso.ts",

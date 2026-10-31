@@ -327,7 +327,7 @@ A one-paragraph version you can paste anywhere:
 
 ## 8. Build order and parallelism
 
-60 steps, 252 agent-days estimated. Components come online in this order — which is also the order in which you can *see* something working.
+61 steps, 253 agent-days estimated (401 slices of ≤1 day). Components come online in this order — which is also the order in which you can *see* something working.
 
 | Phase | Steps | Components delivered | You can demo |
 |---|---|---|---|

@@ -1,0 +1,34 @@
+name: plan gates
+
+# The plan is code: these four scripts are the only thing standing between the spec and
+# an agent confidently building the wrong thing. They are dependency-free on purpose —
+# no install step, no lockfile, ~1 second each.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Docs integrity (fences, tables, anchors, §-refs, packets)
+        run: node scripts/check-docs.mjs
+
+      - name: Requirement traceability (241 FRs, one owner each)
+        run: node scripts/check-fr-coverage.mjs
+
+      - name: Execution layer is not stale
+        run: node scripts/gen-slices.mjs --check
+
+      - name: Registry + slice rules (G1–G6)
+        run: node scripts/check-steps.mjs --strict --granularity

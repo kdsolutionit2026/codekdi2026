@@ -18,7 +18,7 @@
 - [1. Engineering rules baked into the code](#1-engineering-rules-baked-into-the-code)
 - [2. Toolchain, environment and reality checks](#2-toolchain-environment-and-reality-checks)
 - [3. Bootstrap (S0.1–S0.2)](#3-bootstrap-s01s02)
-- [4. Phase 0 — Foundations (S0.3–S0.13)](#4-phase-0--foundations-s03s013)
+- [4. Phase 0 — Foundations (S0.3–S0.14)](#4-phase-0--foundations-s03s014)
 - [5. Phase 1 — Money In (S1.1–S1.21)](#5-phase-1--money-in-s11s121)
 - [6. Phase 2 — Money Out & Scale (S2.1–S2.18)](#6-phase-2--money-out--scale-s21s218)
 - [6A. Phase 3 — Global & Enterprise (S3.1–S3.8)](#6a-phase-3--global--enterprise-s31s38)
@@ -356,7 +356,7 @@ Local ports: API `54321`, DB `54322`, Studio `54323`, Inbucket (email capture) `
 8. `vitest.config.ts` with the three projects from §16.1 (verbatim).
 9. `.gitignore`: add `.env*.local`, `.supabase/`, `test-results/`, `playwright-report/`, `coverage/`, `tests/.auth/`.
 10. `docs/PROGRESS.md` from the template in §13.1. `docs/steps.json` is already committed (registry, §19) — read it, don't recreate it.
-11. The three documentation gates from §19.1–§19.2 and §22 (`scripts/check-steps.mjs`, `scripts/check-fr-coverage.mjs`, `scripts/check-docs.mjs`), each wired to a script:
+11. The four documentation gates from §19.1–§19.3 and §22 (`scripts/check-steps.mjs`, `scripts/check-fr-coverage.mjs`, `scripts/check-docs.mjs`), each wired to a script (plus `scripts/gen-slices.mjs --check` for the execution layer):
    ```json
    "check:steps": "node scripts/check-steps.mjs",
    "check:fr": "node scripts/check-fr-coverage.mjs",
@@ -441,7 +441,7 @@ jobs:
 
 ---
 
-## 4. Phase 0 — Foundations (S0.3–S0.13)
+## 4. Phase 0 — Foundations (S0.3–S0.14)
 
 Phase 0 outcome: one can sign in, the app knows who you are and what you may do, every table is tenant-isolated, every privileged action is audited, jobs run, and the public shell is branded from the database. **No invoices, no money yet.**
 
@@ -834,6 +834,28 @@ export async function asUser<T>(userId: string, fn: (tx: Tx) => Promise<T>) {
 **Done when:** restore drill completed once with a recorded duration; all 8 runbooks exist and are linked from `ONCALL.md`.
 **Commit:** `feat(FR-NFR-004): backups, restore drill, runbooks and incident response`
 
+### S0.14 — Interface freeze: the four contracts every later step imports
+
+**Goal:** the shapes that cross step boundaries are decided once, in types and tests, before any of them is implemented. Later steps implement *against* these contracts; they may not redefine them.
+**Depends on:** S0.1, S0.5. **Master spec:** §7, §8.7, §15.2, §15.5, §16.2. **Features:** none — infrastructure step (owns no FR). **Effort:** 1 agent-day.
+
+**Build**
+
+1. `src/lib/money/types.ts` — `type Money = string` (never `number`), `MicroUsd` branded type, `parseMoney`/`formatMoney`/`toDbNumeric` **signatures only** (`throw new Error('not implemented')`). Master spec §7.
+2. `src/lib/ledger/types.ts` — `type LedgerEntryDraft`, `type LedgerPosting`, `type PostingResult`, and the `postLedger(tx, posting): Promise<PostingResult>` signature. Port the field names **verbatim** from master spec §8.7 so the SQL function and the TS caller cannot disagree.
+3. `src/lib/payments/provider.ts` — the `PaymentProvider` interface: `createPayment`, `confirmPayment`, `capture`, `refund`, `void`, `retrieve`, `verifyWebhook(raw, headers)`. Methods return discriminated results (`{ ok: true, … } | { ok: false, code, retryable }`), never throw for a decline. No implementation in this step — S1.10 adds the sandbox adapter.
+4. `src/lib/payments/events.ts` — the canonical webhook event: `type NormalizedEvent = { id, type, provider, providerEventId, occurredAt, data }` plus a zod schema and `EVENT_TYPES` constant derived from master spec Appendix C. One shape for every processor; adapters normalise into it, nothing else invents event names.
+5. `tests/contract/interface-freeze.test.ts` — pins all four contracts: schema snapshots, a compile-time fixture per contract (`satisfies`), and a test that `EVENT_TYPES` has no duplicates and every string is `domain.action`.
+6. `docs/adr/0001-interface-freeze.md` — the four contracts, why each is frozen, the change procedure (ADR + version bump + update the fixture in the same PR), and the list of steps that depend on each one.
+7. A `CODEOWNERS`-style note in the ADR: these four files are **types only**; adding runtime logic to them is a review failure. Lint rule (or a test) asserting the files contain no `function` bodies beyond the throwing stubs.
+
+**Tests:** the contract test fails if any field is renamed, if a money field becomes `number`, if a decline path starts throwing, or if an event type is added without updating the fixture.
+**Verify:** `pnpm test:contract -- interface-freeze && pnpm typecheck`
+**Done when:** the four files exist as types, the contract test is green, and a deliberately renamed field in a scratch branch makes it red.
+**Commit:** `feat(S0.14): freeze money, ledger, provider and event contracts`
+
+---
+
 ### Phase 0 gate (must all be true before S1.1)
 
 - [ ] `pnpm verify` green from a clean clone.
@@ -846,6 +868,7 @@ export async function asUser<T>(userId: string, fn: (tx: Tx) => Promise<T>) {
 - [ ] Brand name/logo/address change in DB reflects on site and in an email.
 - [ ] All six route profiles return the full security header set; CSP has no `unsafe-eval`; a CSP violation is actually blocked.
 - [ ] One restore drill done end-to-end with the duration recorded; every alert has a runbook.
+- [ ] The four frozen contracts (S0.14) are in place, the contract test is green, and renaming a field makes it red.
 
 ---
 
@@ -2350,11 +2373,24 @@ Steps that need **no** migration (S0.12, S1.8, S1.15–S1.17, S1.21, S2.7, S2.8,
 | Perf | `pnpm test:load` (k6) | Checkout 50 rps p95 < 1.5 s; dashboard p95 < 700 ms |
 | Smoke | `pnpm smoke` | Full sandbox flow on staging after deploy |
 | Migration | `supabase db reset` in CI | Applies from zero, no drift |
-| Plan drift | `pnpm check:steps --strict` | Every step marked `done` has its files; registry matches reality |
+| Plan drift | `pnpm check:steps --strict` | Every step marked `done` has its files; registry matches reality; started steps have reviewed, tested slices (§19.2 G5) |
+| Slice freshness | `node scripts/gen-slices.mjs --check` | `docs/slices.json` is stale relative to `spec.md` — slices must be regenerated, never hand-edited |
 | Requirement traceability | `pnpm check:fr` | All 241 FRs in master spec §35 have exactly one owner step; `docs/steps.json` agrees with Appendix B |
 | Docs integrity | `pnpm check:docs` | Fences, tables, anchors, step packets and `§` references are all valid (§22) |
 
-**Plan gates:** `pnpm check:steps` (registry vs files), `pnpm check:fr` (every FR has one owner step), `pnpm check:docs` (fences, anchors, tables, §-references — §22).
+**Plan gates:** `pnpm check:steps --strict` (registry vs files, plus slice rules G5–G6), `pnpm check:fr` (every FR has one owner step), `pnpm check:docs` (fences, anchors, tables, §-references — §22), `node scripts/gen-slices.mjs --check` (execution layer not stale).
+
+### 9.1 Gate tiers — checking is continuous, not a phase exit
+
+A gate longer than its budget gets skipped, so the budget is part of the gate. Three loops, three frequencies (§19.2, `docs/STEP-GRANULARITY.md` §5):
+
+| Tier | When | Budget | Contents |
+|---|---|---|---|
+| **Slice** | before every commit | **< 60 s** | typecheck, lint, unit tests for touched files, RLS smoke on touched tables, the slice's named test |
+| **Unit** | every ~8 slices / end of a step | ~5 min | integration, migration replay from zero, contract suite (S0.14), one tenant-isolation spot check |
+| **Release** | every ~10 steps / end of a phase | ~30 min | full suite, fuzz, isolation suite, restore drill, `check:docs` + `check:fr` + `check:steps --strict` + `gen-slices --check`, escape review |
+
+The three plan gates also run in CI on every PR — they are cheap and catch drift at the moment it is introduced. Big-bang verification at the end of a phase is forbidden: by then the defect is three weeks old and its context is gone.
 
 **Coverage gates:** `src/lib/money` 100%, `src/lib/ledger` ≥ 95%, `src/features/payments` ≥ 90%, overall ≥ 70%. Coverage is a floor, not a goal — the scenario matrix in master spec §33.2 is the real definition.
 
@@ -3191,7 +3227,9 @@ it('the app connection cannot bypass RLS', async () => {
 
 ## 19. Step registry and machine-readable tracking
 
-`docs/steps.json` is the **machine-readable** mirror of §3–§6A: **60 steps** (13 phase 0, 21 phase 1, 18 phase 2, 8 phase 3), and for each step the FR IDs it owns. Agents and CI read it; humans read this file.
+`docs/steps.json` is the **machine-readable** mirror of §3–§6A: **61 steps** (14 phase 0, 21 phase 1, 18 phase 2, 8 phase 3), and for each step the FR IDs it owns. Agents and CI read it; humans read this file.
+
+Each step also carries `effort` (agent-days, copied verbatim from this file) and is split into **slices** in `docs/slices.json` — the ≤1-agent-day execution layer, generated from this file's `**Build**` lists. §19.2 and `docs/STEP-GRANULARITY.md` define the rules; `node scripts/gen-slices.mjs --write` is the only way to change it.
 
 ```jsonc
 {
@@ -3202,6 +3240,7 @@ it('the app connection cannot bypass RLS', async () => {
       "phase": 0,
       "title": "Authentication with opaque server-side sessions",
       "depends_on": ["S0.5"],
+      "effort": 2.5,
       "fr": ["FR-AUTH-001", "FR-AUTH-002", "FR-AUTH-003", "FR-AUTH-004", "FR-AUTH-005",
              "FR-AUTH-006", "FR-AUTH-007", "FR-SEC-004", "FR-SEC-010", "FR-SEC-011"],
       "files": ["supabase/migrations/0003_identity.sql", "src/lib/security/session.ts", "src/app/(auth)/sign-in/page.tsx"],
@@ -3226,14 +3265,55 @@ Rules:
 
 The real, dependency-free implementation lives at **`scripts/check-steps.mjs`** (create it in S0.1, then never edit it unless you also update this section). It prints one row per step (`done`, `ready`, `pending`, `BROKEN`), accepts an optional step id (`node scripts/check-steps.mjs S1.5`), and `--strict` exits 1 when a step marked `done` is missing any of its `files` — the only failure that matters, because it means the registry is lying.
 
+Two granularity modes were added in v1.1, both **opt-in** so the report stays free:
+
+- `--slices [S1.5]` prints the slice table from `docs/slices.json` (id, effort, seam, reviewed, title).
+- `--granularity` runs rules G1–G4 of §19.2 over every slice and exits 1 on any breach.
+
+`--strict` additionally runs G5–G6 on every step that is `in_progress` or `done` (its slices must all be reviewed, carry a named test, and be `done` themselves). This is the enforcement surface for test-first: a step cannot move to `in_progress` on unreviewed or untested slices.
+
 Contract (both files must keep it):
 
 - reads `docs/steps.json` relative to the repository root;
 - never writes anything;
-- exit 0 = report only; exit 1 = `--strict` and at least one `BROKEN` step;
+- exit 0 = report only; exit 1 only under `--strict` (BROKEN step, or G5/G6 breach) or `--granularity` (G1–G4 breach);
 - no network, no dependencies, runs on Node 20+.
 
-### 19.2 Requirement coverage script
+### 19.2 Slice registry — the execution layer
+
+`docs/steps.json` says *what capability exists*. `docs/slices.json` says *what an agent does before its next commit*. Slices are **generated** from each step's numbered `**Build**` items, so the plan and the execution queue cannot drift.
+
+```jsonc
+{ "id": "S1.5.3", "step": "S1.5", "phase": 1, "title": "private.ledger_post(...) — port verbatim from master spec §8.7",
+  "seam": "schema", "kind": "rls", "effort": 0.45,
+  "gate": "pnpm test:unit --grep ledger-post && pnpm check:rls",
+  "test": null, "reviewed": true, "source": "derived", "status": "pending" }
+```
+
+| Field | Meaning |
+|---|---|
+| `seam` | the one layer the slice touches: `schema`, `domain`, `module`, `contract`, `http`, `ui`, `test`, `ops`, `docs` |
+| `kind` | the test kind implied by the seam (`rls`, `unit`, `contract`, `integration`, `e2e`, `smoke`, or `null`) |
+| `effort` | agent-days; **always ≤ `max_effort_per_slice` (1.0)** |
+| `gate` | the exact command that must pass before the commit |
+| `test` | the test file that must exist — and fail — before the code is written; `null` for docs slices |
+| `reviewed` | a human has read this slice and agrees it is one day, one seam, one FR |
+| `source` | `derived` (from a `**Build**` item) or `authored` (from `scripts/gen-slices.mjs` `OVERRIDES`, for packets with too few bullets) |
+
+Rules:
+
+- **G1** every step has slices; ids are `<step>.<n>`, unique.
+- **G2** `0 < effort ≤ 1.0`. A step whose total effort is ≤ 1.0 day is exactly one slice — over-splitting a small step is a defect too.
+- **G3** a step has at least `ceil(effort)` slices and its slices sum exactly to `effort`. Fake splits and hidden big slices are both caught.
+- **G4** every slice names a known seam and a gate command.
+- **G5** a step cannot be `in_progress` unless every slice is `reviewed` and every slice names a test (test-first).
+- **G6** a `done` step has only `done` slices.
+
+`docs/slices.json` is never hand-edited. To change a slice, change the packet's `**Build**` list in this file and run `node scripts/gen-slices.mjs --write`; CI runs `--check` and fails on drift. Titles that read badly after generation are a signal that the `**Build**` list is too terse, not that the JSON needs a patch.
+
+Why this exists, in one number: at 61 coarse units the escaped-defect rate is roughly 60–75 %; at ~250 one-day commits it is 75–82 %; at ~500 it is 78–85 %; at ~1,500 it is flat or worse. **The gain is in the first split, and the plateau is real** — see `docs/STEP-GRANULARITY.md` §6. Splitting alone does not fix unverifiable acceptance (that is G5) or interface drift (that is S0.14), and it makes the latter worse if the contracts are not frozen first.
+
+### 19.3 Requirement coverage script
 
 `scripts/check-fr-coverage.mjs` enforces traceability in both directions:
 
@@ -3294,20 +3374,25 @@ Every PR states its rollback in one line.
 
 ## 22. Documentation quality gates (the plan is code)
 
-The specification is the input to every agent session. If it drifts, an agent confidently builds the wrong thing. Three dependency-free scripts keep it honest; all three run in CI and must be green before any docs PR merges.
+The specification is the input to every agent session. If it drifts, an agent confidently builds the wrong thing. Four dependency-free scripts keep it honest; all four run in CI and must be green before any docs PR merges.
+
+CI wiring: `.github/workflows/plan-gates.yml` runs all four on every push to `main` and every PR, with `check-steps.mjs --strict --granularity` as the last step.
 
 | Script | Command | Fails when |
 |---|---|---|
 | `scripts/check-docs.mjs` | `pnpm check:docs` | Unbalanced code fences, ragged table columns, dead internal anchors, a step missing any of Goal / Depends on / Features / Verify / Done when / Commit, a step in `spec.md` missing from `docs/steps.json` (or vice versa), or a `§` reference that points at a section that does not exist |
 | `scripts/check-steps.mjs` | `pnpm check:steps --strict` | A step marked `done` is missing one of its `files` |
 | `scripts/check-fr-coverage.mjs` | `pnpm check:fr` | A requirement in master spec §35 is unowned, owned twice, owned by a step that does not exist, or missing from the registry entry that claims it |
+| `scripts/gen-slices.mjs` | `node scripts/gen-slices.mjs --check` | `docs/slices.json` no longer matches what `spec.md` derives — the execution layer drifted from the plan, or a slice exceeds 1 agent-day, or the slice efforts no longer sum to the step effort |
+| `scripts/check-steps.mjs --granularity` | `pnpm check:granularity` | G1–G4 of §19.2: a slice with no seam, no gate, a duplicate id, an effort above 1.0, or a step with too few slices for its effort |
 
 ### 22.1 When you change the docs
 
-1. Run all three scripts. A red `check:fr` after adding a feature means you forgot an owner step; a red `check:docs` means a reference or a table is broken.
+1. Run all four scripts (`check:docs`, `check:fr`, `check:steps --strict`, `gen-slices --check`). A red `check:fr` after adding a feature means you forgot an owner step; a red `check:docs` means a reference or a table is broken.
 2. If you add an FR to the master spec, you **must** add it to exactly one step's `**Features:**` line, to Appendix B, and to `docs/steps.json` `features`. Three places, one meaning.
-3. If you add a step, add the packet (§5 format), the registry row, and its FRs. Renumbering is forbidden — append `S1.5b` instead.
-4. If you change a contract (a signature in §15), update §15 **and** every step that calls it in the same PR (§15.14).
+3. If you add a step, add the packet (§5 format) with a numbered `**Build**` list, the registry row with `effort`, and its FRs; then run `node scripts/gen-slices.mjs --write`. Renumbering is forbidden — append `S1.5b` instead.
+4. If you edit a `**Build**` list, regenerate the slices in the same commit. A `**Build**` item that is two concerns produces a slice that is two concerns — fix the bullet, not the JSON.
+5. If you change a contract (a signature in §15), update §15 **and** every step that calls it in the same PR (§15.14). The four frozen contracts (S0.14) change by ADR **before** the code does.
 
 ### 22.2 The rules the checkers cannot enforce (a human must)
 
@@ -3315,13 +3400,14 @@ The specification is the input to every agent session. If it drifts, an agent co
 - **Done when** must be observable from outside the code (a DB row, a PDF, an email, a ledger balance), never "code written".
 - **Tests** must name the specific assertion that would catch a regression, not "unit tests".
 - Estimates are not promises; the gate and the Definition of Done are.
+- A slice's `reviewed: false` is a **blocker**, not a note (§19.2 G5). Reviewing the slice — one day, one seam, one FR, one named test — is the act that makes auto-merge safe. Today 279 of 401 slices are reviewed; no phase-2 step may start until its own slices are.
 
 ### 22.3 Documentation change control
 
 | Change | Needs |
 |---|---|
 | Typo, wording, table formatting | A direct commit (run the three scripts) |
-| New/renamed step, FR ownership change | PR + `check:fr` green + a line in `docs/PROGRESS.md` |
+| New/renamed step, FR ownership change, slice regeneration | PR + `check:fr` + `gen-slices --check` green + a line in `docs/PROGRESS.md` |
 | Schema, ledger, security, or contract change | ADR (§20.3) + master spec update + plan update in the same PR |
 | Phase reorder | Written approval in `docs/OPEN_QUESTIONS.md` — this invalidates estimates |
 
@@ -3333,7 +3419,7 @@ Every item an AI agent needs to build this platform without guessing, and where 
 
 | # | What the agent needs | Where | Status |
 |---|---|---|---|
-| 1 | What to build and in what order | §3–§6A (60 steps), `docs/steps.json` | ✅ |
+| 1 | What to build and in what order | §3–§6A (61 steps), `docs/steps.json` | ✅ |
 | 2 | What is *correct* (rules, schema, ledger, RBAC) | master spec (referenced per step) | ✅ |
 | 3 | Exact files per step | each step's **Build** + `docs/steps.json.files` | ✅ |
 | 4 | Commands to verify | each step's **Verify**, §9, `pnpm verify` | ✅ |
@@ -3360,7 +3446,7 @@ Every item an AI agent needs to build this platform without guessing, and where 
 | 25 | Phase 2 and Phase 3 at the same rigor as Phase 1 | **§6 (S2.1–S2.18), §6A (S3.1–S3.8)** (new) | ✅ |
 | 26 | Security headers, CSP, edge controls, no-security-theater rule | **S0.12** (new) | ✅ |
 | 27 | Backups, PITR, restore drill, runbooks, incident response | **S0.13** (new) | ✅ |
-| 28 | Machine-checkable traceability (FR → step → test) | Appendix B, §19.2, `scripts/check-fr-coverage.mjs` | ✅ |
+| 28 | Machine-checkable traceability (FR → step → test) | Appendix B, §19.3, `scripts/check-fr-coverage.mjs` | ✅ |
 | 29 | Lettered/renumbered cross-references that still resolve | §22 (`check-docs.mjs`) | ✅ |
 | 30 | Every route, its permission and its cache policy | **Appendix C** (new) | ✅ |
 

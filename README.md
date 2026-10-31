@@ -2,7 +2,7 @@
 
 **KD PAY LLC** — a white-label PayFac / payment aggregation platform for Asian sub-merchants, built on Next.js + Supabase + Vercel.
 
-> **Current status:** specification complete (v1.0.0) and build plan complete (v1.1.0) — 60 steps across 4 phases, every one of the 241 requirements assigned to an owner step. Application code has not been scaffolded yet.
+> **Current status:** specification complete (v1.0.0) and build plan complete (v1.2.0) — 61 steps across 4 phases, every one of the 241 requirements assigned to an owner step, decomposed into 401 slices of at most one agent-day each. Application code has not been scaffolded yet.
 > The specification is the single source of truth and is written to be executed by AI coding agents.
 
 ## Start here
@@ -14,7 +14,9 @@
 | [docs/COMPONENTS.md](docs/COMPONENTS.md) | **Start here to understand the system**: the ten core components in plain language, a traced $100 payment, external services, a glossary, and how to explain it to a developer, an investor, an auditor or a support agent. |
 | [docs/AGENT_PLAYBOOK.md](docs/AGENT_PLAYBOOK.md) | **How to run the build with an AI agent**: which agent, the session loop, the evidence standard, how to cross-check that features actually work, and the failure modes to watch for. |
 | [docs/reviews/](docs/reviews/) | One review file per step — the audit trail proving each step was verified by a second session. |
-| [docs/steps.json](docs/steps.json) | Machine-readable registry of all 60 steps: dependencies, files that must exist, verify command, owned FRs, status. The agent reads it to know what to do next. |
+| [docs/steps.json](docs/steps.json) | Machine-readable registry of all 61 steps: dependencies, effort, files that must exist, verify command, owned FRs, status. The agent reads it to know what to do next. |
+| [docs/slices.json](docs/slices.json) | The execution layer, **generated** from `spec.md`: 401 slices of ≤1 agent-day, each with a seam, a gate command, a named test and a review flag. The agent pulls one slice per commit. Never hand-edited. |
+| [docs/STEP-GRANULARITY.md](docs/STEP-GRANULARITY.md) | Why work is cut this way, the six rules G1–G6, the three gate tiers, the over-splitting hazards, and the escaped-defect arithmetic behind them. |
 | [docs/PROGRESS.md](docs/PROGRESS.md) | Live build tracker: current step, last session's results, environment versions. The agent updates it every session. |
 | [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) | Business/legal decisions that must be closed before live traffic. |
 | [docs/runbooks/README.md](docs/runbooks/README.md) | Operational runbooks to write before launch. |
@@ -57,7 +59,8 @@ Next.js (App Router) · TypeScript (strict) · Supabase (Postgres + Auth + Stora
 ```bash
 node scripts/check-docs.mjs         # 0 problems: fences, tables, anchors, step packets, § references
 node scripts/check-fr-coverage.mjs  # 241 requirements / 241 owned / 0 unowned
-node scripts/check-steps.mjs        # 60 steps, dependency-safe order, files-to-create per step
+node scripts/gen-slices.mjs         # 401 slices, ≤1 agent-day each, sum-checked against the plan
+node scripts/check-steps.mjs        # 61 steps, dependency-safe order, slices, files-to-create per step
 ```
 
 If any of them fails, the plan and the specification have drifted apart — fix the docs before writing code.

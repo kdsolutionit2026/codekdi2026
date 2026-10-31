@@ -4,14 +4,26 @@
 
 ## Status
 
-- **Current phase:** Phase 0 — not started (0 of 60 steps done)
+- **Current phase:** Phase 0 — not started (0 of 61 steps done; 0 of 401 slices done)
 - **Last completed step:** none
 - **Next step:** S0.1 — repository scaffold and toolchain (`npm`-free: `pnpm`)
-- **Steps total:** 60 (13 phase 0 · 21 phase 1 · 18 phase 2 · 8 phase 3) — see `docs/steps.json`
+- **Steps total:** 61 (14 phase 0 · 21 phase 1 · 18 phase 2 · 8 phase 3) — see `docs/steps.json`
+- **Slices:** 401, every one ≤ 1 agent-day, 279 reviewed (phases 0–1) — see `docs/slices.json`
 - **Blocked by:** nothing
-- **Last environment check:** 2026-10-29 — repository contains only docs (`README.md`, `spec.md`, `docs/`); no application code yet
+- **Last environment check:** 2026-11-01 — repository contains docs, the plan checkers, the slice registry and four decks (`deck/`); no application code yet
 
 ## Log (newest first)
+
+### 2026-11-01 — execution layer: slices, test-first and frozen contracts
+- Done: `scripts/gen-slices.mjs` + `docs/slices.json` — every step decomposed mechanically from its `**Build**` list into **401 slices of ≤ 1 agent-day** (max 1.0, sum 253.0 = the plan's effort). Slices carry `seam`, `kind`, `gate`, `test`, `reviewed`, `status`; the file is generated, never hand-edited; `--check` fails CI on drift.
+- Done: `docs/STEP-GRANULARITY.md` — two levels (step = product contract, slice = agent contract), rules G1–G6, the ≤400-line / one-FR / one-seam budget, the three gate tiers (<60 s / ~5 min / ~30 min), over-splitting hazards and their fixes, and the honest 60 → 401 arithmetic (most of the gain is the first split; ~1,500 is flat or worse).
+- Done: `scripts/check-steps.mjs` gained `--slices` and `--granularity`, and `--strict` now also enforces G5/G6. **§19.1 preserved:** a bare run is still report-only and exits 0; only `--strict` / `--granularity` can fail. Verified both ways in a scratch copy (G2/G3/G5 fire, exit 1; bare run exit 0).
+- Done: **S0.14 — interface freeze** (new step, phase 0): money, ledger posting, `PaymentProvider` and the canonical webhook event are decided as types + a contract test *before* anything implements them. Splitting worsens interface drift; this is the fix. Phase 0 gate now requires it.
+- Done: §9.1 gate tiers, §19.2 slice registry + G1–G6, §22 fourth gate + slice review rule; `docs/AGENT_PLAYBOOK.md` §4.1 rewritten as the slice loop (RED → BUILD → GATE → COMMIT); `.github/workflows/plan-gates.yml` runs all four gates on every PR.
+- Gate: check-docs 0 · check-fr 241/241 (61 steps) · check-steps --strict --granularity exit 0 · gen-slices --check up to date
+- Tests: n/a (no code)
+- Deviations: step count 60 → 61 (S0.14 added); effort 252 → 253 agent-days
+- Next: S0.1
 
 ### 2026-10-30 — component map
 - Done: `docs/COMPONENTS.md` — 10 core components with plain-language purpose, owned tables, dependencies, failure symptoms and owning steps; traced $100 payment end to end; external-service table; glossary; audience guides; build-order/parallelism map; repo map; explicit non-goals
@@ -26,7 +38,7 @@
 - Next: S0.1
 
 ### 2026-10-29 — planning
-- Done: master specification v1.0.0 (`docs/MASTER_SPECIFICATION.md`); build plan v1.1.0 (`spec.md`) — 60 steps, Appendix B requirement map (241/241 owned), Phase 2/3 packets, security/ops steps S0.12/S0.13
+- Done: master specification v1.0.0 (`docs/MASTER_SPECIFICATION.md`); build plan v1.1.0 (`spec.md`) — 61 steps, 401 slices, Appendix B requirement map (241/241 owned), Phase 2/3 packets, security/ops steps S0.12/S0.13
 - Gate: `node scripts/check-docs.mjs` 0 problems · `node scripts/check-fr-coverage.mjs` 241/241 · `node scripts/check-steps.mjs --strict` exit 0
 - Tests: n/a (no code)
 - Deviations: none

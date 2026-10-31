@@ -12,7 +12,7 @@
 2. **Best fit for the builder seat:** a *repo-native terminal agent* that can edit files, run commands, read test output, and loop — Claude Code or Codex CLI class. Chat-only assistants cannot do this job; IDE autocomplete cannot either.
 3. **Never let the author be the only reviewer.** Every step gets a second session, a different model family, with no write access: read the diff, try to break it.
 4. **"It compiles" is not evidence.** A step is done when five artefacts exist (§5): code, a test that fails without the code, pasted verify output, a database-level proof, and a human-visible demo.
-5. **One step per session.** 60 steps, 252 agent-days of estimated work. Small, gated, committed increments beat one heroic prompt every time.
+5. **One slice per commit, one step per session.** 61 steps, 253 agent-days of estimated work, 401 slices of at most one day. Small, gated, committed increments beat one heroic prompt every time — see `docs/STEP-GRANULARITY.md`.
 
 The uncomfortable truth: an AI agent will happily hand you a green build that cannot take a payment. The rest of this document is how to make that outcome unlikely.
 
@@ -78,25 +78,35 @@ For Tier A steps, use the reviewer on the **same** tier (or higher). For Tier C,
 
 ## 4. The working procedure
 
-### 4.1 Per-step loop (the only loop that matters)
+### 4.1 The slice loop (the only loop that matters)
+
+Work is cut into **slices of at most one agent-day** (`docs/slices.json`, rules in `docs/STEP-GRANULARITY.md`). A *step* is what the product gains; a *slice* is what one session does. The agent pulls slices; the human approves steps.
 
 ```text
-1. PREFLIGHT   can I start?          → node scripts/check-steps.mjs S1.5
-2. BRIEF       assemble the prompt    → §12 template + step packet + FRs
-3. PLAN        agent proposes ≤10 lines + file list; you approve or correct
-4. BUILD       agent implements in chunks; typecheck after each chunk
-5. VERIFY      agent runs the step's Verify command and pastes real output
-6. PROVE       the proof query / demo (§6, §7) — not the UI's word for it
-7. REVIEW      a second session, other model family, read-only
-8. CLOSE       commit with step id, registry → done, PROGRESS entry, handoff note
+1. PULL        next slice              → node scripts/check-steps.mjs --slices S1.5
+2. BRIEF       prompt the agent        → §12 template + step packet + the slice + its FR
+3. RED         write the slice's named test first; paste it failing
+4. BUILD       implement until the test passes; typecheck after each chunk
+5. GATE        slice gate < 60 s: typecheck, lint, touched unit tests, RLS smoke
+6. COMMIT      one slice, one commit, trailer `Slice: S1.5.3`
+7. UNIT GATE   every ~8 slices: integration + migration replay + contracts (≈5 min)
+8. CLOSE STEP  step Verify command, proof query, review, registry → done, PROGRESS entry
 ```
 
 Rules that are not optional:
 
+- **The test exists before the code.** A slice with `test: null` on a non-doc seam cannot move to `in_progress` — `check-steps.mjs --strict` enforces it (rule G5). "I'll add tests at the end" is how a step ends up with a test that asserts whatever the code happens to do.
+- **One commit per slice.** If a slice needs a second commit, it was two slices; stop and say so rather than bundling.
+- **A slice never crosses its seam.** Schema slice touches SQL; the code slice that uses it is the next one. If you need both to verify anything, your cut was horizontal — re-cut it.
+- **Do not start a step whose slices are unreviewed.** 279 of 401 slices are reviewed today (all of phases 0–1). Reviewing a slice means checking three things: one day, one seam, one named test.
 - **Stop at step 8.** Do not let the same session start the next step. Context carries stale assumptions, and the review gate gets skipped "just this once".
 - **Two strikes.** If the same error survives two fix attempts, stop and report: exact command, exact output, what was tried. Thrashing is how agents burn a day.
 - **No silent scope.** Any deviation gets written down and approved before it lands.
 - **The agent never edits** `spec.md`, `docs/MASTER_SPECIFICATION.md`, `docs/steps.json` status, or the tests of a *previous* step to make the current one pass. That is the single most common failure mode (§8, row 1).
+
+**Why one day, and why not smaller.** Escaped defects per 10 steps run roughly 60–75 % at the 61 coarse packets, 75–82 % at ~250 one-day commits, 78–85 % at ~500, and flat or worse at ~1,500. Most of the gain is the *first* split; past ~400 slices you buy review fatigue, shared-file conflicts and lost intent. The 401 slices are the plateau, not a starting point for further splitting. Splitting also does **not** fix unverifiable acceptance (that is the RED step above) or interface drift (that is the frozen contracts, S0.14) — and it makes the latter worse if you skip the freeze.
+
+**Measure it, don't assume it.** Escaped defects per 10 steps = defects found in slices N+1..N+10 that belong to slice N. Falling → keep going. Flat → stop. Rising → you are under-specifying, not over-splitting; go back to the packet.
 
 ### 4.2 The kickoff prompt (Builder seat)
 
