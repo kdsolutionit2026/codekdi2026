@@ -14,6 +14,14 @@
 
 ## Log (newest first)
 
+### 2026-11-01 (fourth) — the build book
+- Done: `docs/BUILD-BOOK.md` (700 lines) — the guide a first-time vibe coder follows end to end: what to read first (tiered, with time estimates), the 22-file library in reading order, the serial order of all 61 chapters in 4 acts, 20 milestones with the day each becomes demonstrable, the 9-step session procedure, context discipline for agents, the 9-rung test ladder with the 8 tests a PayFac always skips, the weekly 5-slice audit, the 6-step repair procedure and its 3 false fixes, the 3-seat model for cross-agent review, the processor rules in the order they bite, a 13-week plan, and a printable cheat sheet
+- Done: `scripts/next.mjs` — `node scripts/next.mjs` prints the next chapter, its slices (reviewed / tested flags), the commands to run and what comes after; `--order` is the full serial build order (greedy topological sort in chapter order); `--all` lists only what is unblocked
+- Done: spec §19.4 documents the book and the navigator; README, CONTRIBUTING and CLAUDE.md now start from the book; check-docs covers 11 documents
+- Gate: check-docs 0 (11 files) · check-fr 241/241 · gen-slices --check current · check-steps --strict exit 0
+- Deviations: none
+- Next: S0.1
+
 ### 2026-11-01 (third) — the Claude operating kit
 - Done: `CLAUDE.md` — auto-loaded project memory: what to read (and never read), the non-negotiables, the loop, the commands, the two-strike rule
 - Done: `.claude/commands/` — six project slash commands with tool allowlists: `/kickoff`, `/verify`, `/ui`, `/review`, `/adapter`, `/ship`; `.claude/agents/reviewer.md` as a read-only subagent

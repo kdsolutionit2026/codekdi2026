@@ -3343,6 +3343,22 @@ Rules:
 
 Why this exists, in one number: at 61 coarse units the escaped-defect rate is roughly 60–75 %; at ~250 one-day commits it is 75–82 %; at ~500 it is 78–85 %; at ~1,500 it is flat or worse. **The gain is in the first split, and the plateau is real** — see `docs/STEP-GRANULARITY.md` §6. Splitting alone does not fix unverifiable acceptance (that is G5) or interface drift (that is S0.14), and it makes the latter worse if the contracts are not frozen first.
 
+### 19.4 Navigation — `scripts/next.mjs` and the build book
+
+`docs/BUILD-BOOK.md` is the human-facing order of operations: what to read first, the 61 chapters in serial
+order, the 20 milestones, the session procedure, the test ladder, the repair procedure and the second-agent
+review. It is the **onboarding document**; this file remains the normative plan.
+
+`node scripts/next.mjs` answers "where am I?" without reading anything: the next step, its slices, whether each
+is reviewed and tested, the exact commands to run, and what comes after. `--order` prints the full serial build
+order (a greedy topological sort in chapter order — the same order `docs/BUILD-BOOK.md` documents), `--all`
+lists only what is unblocked right now. Like the other scripts it is dependency-free, read-only, and never
+mutates the registry.
+
+Rules it encodes: work in chapter order; never start a step whose `depends_on` are not `done`; never start a
+step whose slices are not all `reviewed`; a step is closed only after its `**Verify:**` command, its proof query
+and its adversarial pass.
+
 ### 19.3 Requirement coverage script
 
 `scripts/check-fr-coverage.mjs` enforces traceability in both directions:

@@ -4,7 +4,7 @@ This repository is a **plan plus its execution layer**. There is no application 
 
 ## What to read, in this order, and nothing more
 
-1. This file.
+1. This file, then `docs/BUILD-BOOK.md` §4 if you need the full session procedure.
 2. The **step packet** you are working on: `spec.md` §3–§6A, one `### S<id> — ` block.
 3. The **slices** for that step: `node scripts/check-steps.mjs --slices S1.5`.
 4. The master-spec sections that packet names (typically 100–400 lines).
@@ -28,6 +28,7 @@ Read what the packet points at. If you catch yourself grepping the whole spec, s
 ## The loop (do not improvise a different one)
 
 ```bash
+node scripts/next.mjs                        # what is next, computed from the dependency graph
 node scripts/check-steps.mjs S1.5            # deps done? slices reviewed?
 node scripts/check-steps.mjs --slices S1.5   # pick the next `pending` slice
 ```

@@ -12,6 +12,7 @@ const files = [
   'docs/AGENT_PLAYBOOK.md',
   'docs/STEP-GRANULARITY.md',
   'docs/BUILD-WITH-CLAUDE.md',
+  'docs/BUILD-BOOK.md',
   'docs/CHANGE-PLAYBOOK.md',
   'docs/TROUBLESHOOTING.md',
   'docs/adr/README.md',

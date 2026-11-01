@@ -7,6 +7,8 @@
 
 ## Start here
 
+**Building it, in order:** **[docs/BUILD-BOOK.md](docs/BUILD-BOOK.md)** — the full guide: which file to read first, the serial order of all 61 chapters, the 20 milestones, the step-by-step session procedure, how to test each function, how to repair what the agent missed, and how to get a second AI to check the first. Start here.
+
 **A person joining the build:** [CONTRIBUTING.md](CONTRIBUTING.md) — first 15 minutes, where each answer lives, the commit format, and the six checks to run before accepting an agent's work.
 
 **Building it with Claude:** [docs/BUILD-WITH-CLAUDE.md](docs/BUILD-WITH-CLAUDE.md) — setup, the eight-step slice loop, live preview with Playwright, the proof ladder, the UI checklist, the processor-adapter rules, and the ten ways it goes wrong.
@@ -28,7 +30,7 @@
 | [docs/PROGRESS.md](docs/PROGRESS.md) | Live build tracker: current step, last session's results, environment versions. The agent updates it every session. |
 | [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) | Business/legal decisions that must be closed before live traffic. |
 | [docs/runbooks/README.md](docs/runbooks/README.md) | Operational runbooks to write before launch. |
-| [scripts/](scripts/) | Dependency-free plan gates: `check-docs.mjs`, `check-steps.mjs`, `check-fr-coverage.mjs`, `gen-slices.mjs`, plus `check-commit-msg.mjs` (a `commit-msg` hook via `git config core.hooksPath .githooks`). All four gates run in CI on every PR. |
+| [scripts/](scripts/) | `next.mjs` (what to do next) + dependency-free plan gates: `check-docs.mjs`, `check-steps.mjs`, `check-fr-coverage.mjs`, `gen-slices.mjs`, plus `check-commit-msg.mjs` (a `commit-msg` hook via `git config core.hooksPath .githooks`). All four gates run in CI on every PR. |
 
 ## Non-negotiables (summary)
 

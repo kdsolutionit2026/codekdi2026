@@ -15,7 +15,7 @@ node scripts/gen-slices.mjs --check            # docs/slices.json up to date —
 node scripts/check-steps.mjs --slices S1.5     # the actual work queue for one step
 ```
 
-Then read three documents, in this order. Resist the urge to read more:
+Then read three documents, in this order — or follow the full guide in [docs/BUILD-BOOK.md](docs/BUILD-BOOK.md). Resist the urge to read more:
 
 1. **[docs/COMPONENTS.md](docs/COMPONENTS.md)** — ten components in plain language, one payment traced end to
    end. 20 minutes, and you will understand the system.
