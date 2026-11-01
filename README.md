@@ -10,17 +10,20 @@
 | Document | What it is |
 |---|---|
 | **[docs/MASTER_SPECIFICATION.md](docs/MASTER_SPECIFICATION.md)** | The authoritative, contradiction-free master specification: product, compliance, architecture, full database schema, double-entry ledger, RBAC, payments/risk, security, UI/UX, API, 3-phase plan, and a 241-row traceability matrix. |
-| **[spec.md](spec.md)** | The **executable build plan** for AI agents: **60 ordered steps** (13 foundation, 21 money-in, 18 money-out/scale, 8 global) with exact files, commands, tests, verification gates, 20 copy-paste recipes, and 29 pitfalls that break real deployments. Appendix B maps all 241 requirements to their owner step. Start here when coding. |
+| **[spec.md](spec.md)** | The **executable build plan** for AI agents: **61 ordered steps** (14 foundation, 21 money-in, 18 money-out/scale, 8 global) with exact files, commands, tests, verification gates, 20 copy-paste recipes, and 29 pitfalls that break real deployments. Appendix B maps all 241 requirements to their owner step. Start here when coding. |
 | [docs/COMPONENTS.md](docs/COMPONENTS.md) | **Start here to understand the system**: the ten core components in plain language, a traced $100 payment, external services, a glossary, and how to explain it to a developer, an investor, an auditor or a support agent. |
 | [docs/AGENT_PLAYBOOK.md](docs/AGENT_PLAYBOOK.md) | **How to run the build with an AI agent**: which agent, the session loop, the evidence standard, how to cross-check that features actually work, and the failure modes to watch for. |
 | [docs/reviews/](docs/reviews/) | One review file per step — the audit trail proving each step was verified by a second session. |
 | [docs/steps.json](docs/steps.json) | Machine-readable registry of all 61 steps: dependencies, effort, files that must exist, verify command, owned FRs, status. The agent reads it to know what to do next. |
 | [docs/slices.json](docs/slices.json) | The execution layer, **generated** from `spec.md`: 401 slices of ≤1 agent-day, each with a seam, a gate command, a named test and a review flag. The agent pulls one slice per commit. Never hand-edited. |
 | [docs/STEP-GRANULARITY.md](docs/STEP-GRANULARITY.md) | Why work is cut this way, the six rules G1–G6, the three gate tiers, the over-splitting hazards, and the escaped-defect arithmetic behind them. |
+| [docs/CHANGE-PLAYBOOK.md](docs/CHANGE-PLAYBOOK.md) | **After the build**: 12 recipes for adding a provider, currency, country, payment method, report, permission, language, event, page or price — each with what to touch, what you must **not** touch, and how to prove it. Plus blast-radius tiers and the versioning/deprecation policy. |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Symptom → ordered checks, cheapest first: empty results, wrong money, stuck payments, double posts, missing webhooks, dead jobs, bad PDFs, random sign-outs, local-vs-Vercel, CI-only failures. |
+| [docs/adr/](docs/adr/) | Architecture decision records — one per decision a reviewer could question in six months, starting with the S0.14 interface freeze. |
 | [docs/PROGRESS.md](docs/PROGRESS.md) | Live build tracker: current step, last session's results, environment versions. The agent updates it every session. |
 | [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) | Business/legal decisions that must be closed before live traffic. |
 | [docs/runbooks/README.md](docs/runbooks/README.md) | Operational runbooks to write before launch. |
-| [scripts/](scripts/) | Dependency-free plan gates: `check-docs.mjs`, `check-steps.mjs`, `check-fr-coverage.mjs`. |
+| [scripts/](scripts/) | Dependency-free plan gates: `check-docs.mjs`, `check-steps.mjs`, `check-fr-coverage.mjs`, `gen-slices.mjs`. All four run in CI on every PR. |
 
 ## Non-negotiables (summary)
 

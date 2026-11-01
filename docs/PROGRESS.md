@@ -14,6 +14,15 @@
 
 ## Log (newest first)
 
+### 2026-11-01 (later) — change playbook, troubleshooting ladder, ADRs
+- Done: `docs/CHANGE-PLAYBOOK.md` — 12 extension recipes with a **do-not-touch** column (new provider/currency/country/method/report/permission/language/event/page/price/plan step), blast-radius tiers A/B/C, public-surface versioning + 90-day deprecation policy, and the metrics that say the platform is still easy to change
+- Done: `docs/TROUBLESHOOTING.md` — ten symptom families with checks ordered cheapest-first (RLS empty results, wrong money, stuck payments, double posts, missing webhooks, dead jobs, bad PDFs, random sign-outs, local-vs-Vercel, CI-only flakes), each tied to the pitfall number in §11
+- Done: `docs/adr/` — index + template + ADR 0001 (interface freeze); `check-docs` now validates 8 documents including the three new ones
+- Done: `spec.md` §20.4 (change playbook + tiers), §20.5 (plan defect vs rule change — the fast lane), §11 pointer to the ladder
+- Gate: check-docs 0 (8 files) · check-fr 241/241 · check-steps --strict exit 0 · gen-slices --check up to date
+- Deviations: none
+- Next: S0.1
+
 ### 2026-11-01 — execution layer: slices, test-first and frozen contracts
 - Done: `scripts/gen-slices.mjs` + `docs/slices.json` — every step decomposed mechanically from its `**Build**` list into **401 slices of ≤ 1 agent-day** (max 1.0, sum 253.0 = the plan's effort). Slices carry `seam`, `kind`, `gate`, `test`, `reviewed`, `status`; the file is generated, never hand-edited; `--check` fails CI on drift.
 - Done: `docs/STEP-GRANULARITY.md` — two levels (step = product contract, slice = agent contract), rules G1–G6, the ≤400-line / one-FR / one-seam budget, the three gate tiers (<60 s / ~5 min / ~30 min), over-splitting hazards and their fixes, and the honest 60 → 401 arithmetic (most of the gain is the first split; ~1,500 is flat or worse).

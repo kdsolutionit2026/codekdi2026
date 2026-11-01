@@ -2440,6 +2440,10 @@ Use master spec Appendix G verbatim. Do not launch with any unchecked security, 
 
 ## 11. Pitfalls that break real deployments
 
+> Symptom-first lookup — with an ordered ladder per symptom family rather than a flat list — lives in
+> `docs/TROUBLESHOOTING.md`. This section is the catalogue of *causes*; that file is the order to check them in.
+> Every new pitfall gets a row here **and** a ladder entry there.
+
 | # | Symptom | Cause | Exact fix |
 |---|---|---|---|
 | 1 | `prepared statement "s1" does not exist` / random 500s under load | `postgres.js` prepared statements + Supavisor transaction pooling | `prepare: false` in the client; keep `max` ≤ 3 |
@@ -3356,6 +3360,39 @@ Every PR states its rollback in one line.
 - If implementation reveals a rule is wrong: open `docs/OPEN_QUESTIONS.md`, propose the amendment, wait for a decision, then update master spec + this file + `docs/steps.json` in one PR.
 - Versioning: this plan and the master spec are versioned together (major = scope change, minor = new step/section, patch = clarification).
 - `docs/adr/NNN-<slug>.md` for any decision an agent makes that a reviewer could reasonably question (≥ 8 lines: context, decision, consequences).
+
+### 20.4 Change playbook — how the product grows after the build
+
+The 61 steps build the platform once. Everything after that is a **change**, and changes have a different risk
+profile from greenfield work. `docs/CHANGE-PLAYBOOK.md` holds the recipes (new provider, currency, country,
+payment method, report, permission, language, webhook event, CMS page, pricing change, new plan step), each
+with three columns that matter: **touch**, **do not touch**, **prove**.
+
+The load-bearing part is the "do not touch" column. It encodes the design in one place: one provider
+interface, one ledger posting function, one normalised event, one money type, one tenancy rule, one
+pricing-versioned invoice. A diff that crosses that column is a signal that the abstraction leaked — fix the
+seam, not the call site.
+
+Blast-radius tiers (also in the playbook, §2): **A** money/auth/tenancy needs a human reviewer and the release
+gate; **B** behaviour needs a reviewed slice and green contracts; **C** presentation and docs auto-merge on
+green.
+
+Public surfaces — REST API, webhook events, SDKs, hosted checkout, PDFs, CSV exports, email templates — are
+versioned **before** they need to be, with a 90-day deprecation notice, `Deprecation`/`Sunset` headers, and a
+6-month dual run for any API major. Webhook payloads are additive-only, permanently.
+
+### 20.5 Two classes of plan change
+
+§20.3 forbids a step from changing a rule. Read too literally that also stops the build for a typo, which in
+practice means the rule gets bypassed. So plan changes are split by **who is harmed by being wrong**:
+
+| Class | Examples | Procedure |
+|---|---|---|
+| **Plan defect** | wrong path, missing dependency, terse `**Build**` bullet, an estimate that was obviously wrong, a missing test name | Fix in the same session, separate commit, keep all four plan gates green, one line in `docs/PROGRESS.md`. No approval needed. |
+| **Rule change** | ledger posting, money precision, tenancy boundary, a §15 signature, FR scope, phase order | Stop. `docs/OPEN_QUESTIONS.md` → decision → master spec + `spec.md` + registry in one PR. Tier A. |
+
+Anything that changes what the system **guarantees** is a rule change, however small the diff looks. Anything
+that only changes how the plan *describes* the work is a plan defect.
 
 ---
 

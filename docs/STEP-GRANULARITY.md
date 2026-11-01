@@ -101,7 +101,7 @@ Over-splitting is a real defect, not a safe default. The rules above bound it (G
 | Two slices always change the same three files | Shared-file conflict — `schema.sql`, the FR registry, `steps.json` | Merge them, or give the file **one owner slice** and have the others wait |
 | Slice N cannot pass its gate until slice N+1 lands | The cut is horizontal | Re-cut along a user-visible behaviour |
 | A slice's title needs "and" twice | Multi-concern diff | Cut at the second "and" |
-| A slice exists only to update a doc | Doc-only slices ride along with the code slice they describe, except the plan-level docs |
+| A slice exists only to update a doc | Doc-only slices ride along with the code slice they describe, except the plan-level docs | Absorb it into the code slice |
 | A slice is 0.05 d | Noise | Merge upward |
 
 The generator applies the first rule mechanically: **a step whose effort is ≤ 1.0 day is exactly one slice.**
