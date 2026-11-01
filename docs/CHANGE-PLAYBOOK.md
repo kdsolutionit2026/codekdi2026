@@ -31,7 +31,7 @@ is the point — it is where the design's invariants live.
 
 | # | Change | Touch | Do not touch | Prove |
 |---|---|---|---|---|
-| R1 | **New payment processor** | `src/lib/payments/providers/<name>.ts` implementing `PaymentProvider` (S0.14); a normaliser into `NormalizedEvent`; provider row/config + env schema; CSP entries if it serves hosted fields; recorded fixtures | Checkout orchestration, ledger, risk, invoice state machine. If you must change one, the contract is wrong → ADR first | `tests/contract/provider-<name>.test.ts` green; one sandbox payment end-to-end; replayed webhook dedupes |
+| R1 | **New payment processor** | `src/lib/processors/<name>.ts` implementing `PaymentProcessor` (frozen in S0.14, normative in master spec §4.1); its capability flags; a row in `normalize.ts` mapping vendor codes → `declineClass`; processor row/config + env schema; CSP entries if it serves hosted fields; recorded fixtures | Checkout orchestration, ledger, risk, invoice state machine. If you must change one, the contract is wrong → ADR first | `tests/contract/provider-<name>.test.ts` green; one sandbox payment end-to-end; replayed webhook dedupes |
 | R2 | **New currency** | Currency config row (code + ISO 4217 exponent), money parser/formatter, ledger account provisioning, statements/rounding, payout rail availability | Any assumption that money has 2 decimals — JPY is 0, KWD is 3; `numeric(18,4)` storage does **not** change, only display and rounding | Property test round-trip at exponent 0/2/3; per-currency ledger balance; one sandbox payment |
 | R3 | **New country / KYB flow** | Country config (allowed MCCs, required documents, sanctioned-list config, tax rules, AVS/3DS availability), **versioned** checklist rows | Forking the onboarding wizard per country; a checklist is data with a version — applications in flight keep the version they started under | Golden-file test of the checklist; an in-flight application is unaffected when v2 publishes |
 | R4 | **New payment method** (bank transfer, wallets, async) | Checkout `payment_methods` capability flag, provider capability flag, state machine states (async: `pending → paid`), webhook events, receipt, posting *timing* | Adding a second ledger builder — reuse the existing ones. A new posting *timing* is a new documented rule, not a new code path | Async state-machine test; double-post guard; refund path for the new method |
@@ -96,7 +96,7 @@ again — that file is how the next person (or agent) skips the hour you just sp
 4. The audit log is hash-chained and append-only; checkpoints are signed daily.
 5. Card data never touches our servers (PCI SAQ-A); processor-hosted fields only.
 6. Merchant funds never rest in a KD PAY bank account.
-7. The four S0.14 contracts change by ADR + version bump + fixture update in one PR.
+7. The four S0.14 contracts (money, ledger, `PaymentProcessor`, normalised event) change by ADR + version bump + fixture update in one PR.
 8. Migrations are additive-first: expand → migrate code → contract later.
 9. Every new table ships RLS + isolation test + exposure block in the same migration.
 

@@ -5175,7 +5175,7 @@ Status color mapping (always with text):
 
 - Epics → stories → tasks; each task ≤ 1 day for an AI agent; each story has acceptance criteria and FR IDs.
 - Branch naming: `feat/<FR-ID>-<slug>`, `fix/<FR-ID>-<slug>`, `chore/<slug>`.
-- Commits: Conventional Commits with FR ID in scope, e.g. `feat(FR-PYT-004): add payout approval`.
+- Commits: Conventional Commits with FR ID in scope for feature work, e.g. `feat(FR-PYT-004): add payout approval`; step ids or a doc area for infrastructure and docs. The canonical rule and the `Slice:` trailer live in `spec.md` §13.1a and are enforced by `scripts/check-commit-msg.mjs`.
 - PR template: what/why, FR IDs, screenshots, test evidence, migration notes, security checklist, rollback plan.
 - No direct pushes to main; required checks; one review (human or senior agent) before merge.
 

@@ -316,8 +316,8 @@
       "files": [
         "src/lib/money/types.ts",
         "src/lib/ledger/types.ts",
-        "src/lib/payments/provider.ts",
-        "src/lib/payments/events.ts",
+        "src/lib/processors/types.ts",
+        "src/lib/processors/events.ts",
         "tests/contract/interface-freeze.test.ts",
         "docs/adr/0001-interface-freeze.md"
       ],

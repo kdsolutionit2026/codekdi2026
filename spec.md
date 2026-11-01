@@ -111,7 +111,7 @@ git commit -m "feat(FR-LDG-001..006): ledger accounts, posting function, hash ch
 git push origin arena/c7b6c1ec-codekdi2026  # the session branch is the integration branch
 ```
 
-- Conventional Commits, scope = step ID, body lists `FR-*` IDs.
+- Conventional Commits in the **canonical form of §13.1a** (scope = step id, FR ids, or doc area; `Slice:` trailer on code commits; checked by a commit-msg hook).
 - Migrations are **append-only**: `supabase/migrations/0012_ledger.sql` is never edited after it lands; corrections come as a new file, e.g. `0022_fix_ledger_index.sql`.
 - Each commit must leave `pnpm verify` green (lint + typecheck + unit + integration + RLS).
 - Pushes go **only** to `arena/c7b6c1ec-codekdi2026`.
@@ -364,6 +364,7 @@ Local ports: API `54321`, DB `54322`, Studio `54323`, Inbucket (email capture) `
    "verify": "pnpm lint && pnpm typecheck && pnpm check:docs && pnpm check:fr && pnpm test && pnpm build"
    ```
 12. `src/instrumentation.ts` calling `assertBootConfig()` so a missing env var fails at boot, not at checkout.
+13. `.githooks/commit-msg` installed and active (`git config core.hooksPath .githooks`) — the message format of §13.1a is rejected at commit time, so no agent can land a slice commit without its `Slice:` trailer.
 
 **Tests:** `src/lib/env.test.ts` proving a missing var throws a readable error; `node scripts/check-steps.mjs` prints the registry and exits 0.
 **Verify:**
@@ -836,20 +837,20 @@ export async function asUser<T>(userId: string, fn: (tx: Tx) => Promise<T>) {
 
 ### S0.14 — Interface freeze: the four contracts every later step imports
 
-**Goal:** the shapes that cross step boundaries are decided once, in types and tests, before any of them is implemented. Later steps implement *against* these contracts; they may not redefine them.
+**Goal:** the shapes that cross step boundaries are decided once, in types and tests, before any of them is implemented. Every later step imports these; none may redefine them. Later steps implement *against* these contracts; they may not redefine them.
 **Depends on:** S0.1, S0.5. **Master spec:** §7, §8.7, §15.2, §15.5, §16.2. **Features:** none — infrastructure step (owns no FR). **Effort:** 1 agent-day.
 
 **Build**
 
 1. `src/lib/money/types.ts` — `type Money = string` (never `number`), `MicroUsd` branded type, `parseMoney`/`formatMoney`/`toDbNumeric` **signatures only** (`throw new Error('not implemented')`). Master spec §7.
-2. `src/lib/ledger/types.ts` — `type LedgerEntryDraft`, `type LedgerPosting`, `type PostingResult`, and the `postLedger(tx, posting): Promise<PostingResult>` signature. Port the field names **verbatim** from master spec §8.7 so the SQL function and the TS caller cannot disagree.
-3. `src/lib/payments/provider.ts` — the `PaymentProvider` interface: `createPayment`, `confirmPayment`, `capture`, `refund`, `void`, `retrieve`, `verifyWebhook(raw, headers)`. Methods return discriminated results (`{ ok: true, … } | { ok: false, code, retryable }`), never throw for a decline. No implementation in this step — S1.10 adds the sandbox adapter.
-4. `src/lib/payments/events.ts` — the canonical webhook event: `type NormalizedEvent = { id, type, provider, providerEventId, occurredAt, data }` plus a zod schema and `EVENT_TYPES` constant derived from master spec Appendix C. One shape for every processor; adapters normalise into it, nothing else invents event names.
+2. `src/lib/ledger/types.ts` — `type LedgerEntryDraft`, `type LedgerPosting`, `type PostingResult`, and the `postLedger(tx, posting): Promise<PostingResult>` signature. Port the field names **verbatim** from master spec §8.7 so the SQL function and the TS caller cannot disagree. S1.5 implements it; this step only fixes the shape.
+3. `src/lib/processors/types.ts` — **port verbatim** the `PaymentProcessor` interface from master spec §4.1 (all 15 methods, `ProcessorCapabilities` from §4.4, `ProcessorError`, the canonical payment-status and `declineClass` enums). Do not redesign it, do not rename it, do not narrow it to the four methods we use first: S1.10 implements `sandbox`/`stripe`/`airwallex` against **this exact shape**, and a narrower interface means every adapter gains a cast. Methods return discriminated results; a decline is data, never a thrown exception.
+4. `src/lib/processors/events.ts` — the canonical webhook event: `type NormalizedEvent = { id, type, processor, processorEventId, occurredAt, data }`, a zod schema, and the `EVENT_TYPES` constant derived from master spec Appendix C. One shape for every processor; adapters normalise into it, nothing else invents event names. This file also owns `verifyWebhook`'s `VerifiedEvent` return type. It does **not** own the vendor-code → `declineClass` mapping table — that is `normalize.ts` in S1.10.
 5. `tests/contract/interface-freeze.test.ts` — pins all four contracts: schema snapshots, a compile-time fixture per contract (`satisfies`), and a test that `EVENT_TYPES` has no duplicates and every string is `domain.action`.
 6. `docs/adr/0001-interface-freeze.md` — the four contracts, why each is frozen, the change procedure (ADR + version bump + update the fixture in the same PR), and the list of steps that depend on each one.
-7. A `CODEOWNERS`-style note in the ADR: these four files are **types only**; adding runtime logic to them is a review failure. Lint rule (or a test) asserting the files contain no `function` bodies beyond the throwing stubs.
+7. A `CODEOWNERS`-style note in the ADR: these four files are **types only**; adding runtime logic to them is a review failure. Lint rule (or a test) asserting the files contain no `function` bodies beyond the throwing stubs. The ADR also lists the **existing** paths they replace — `src/lib/processors/types.ts` is where S1.10 will implement adapters, so S0.14 must not create a parallel `src/lib/payments/` tree.
 
-**Tests:** the contract test fails if any field is renamed, if a money field becomes `number`, if a decline path starts throwing, or if an event type is added without updating the fixture.
+**Tests:** the contract test fails if any field is renamed, if a money field becomes `number`, if `PaymentProcessor` loses or gains a method without a fixture update, or if an event type is added without updating the fixture.
 **Verify:** `pnpm test:contract -- interface-freeze && pnpm typecheck`
 **Done when:** the four files exist as types, the contract test is green, and a deliberately renamed field in a scratch branch makes it red.
 **Commit:** `feat(S0.14): freeze money, ledger, provider and event contracts`
@@ -2542,6 +2543,30 @@ OUTPUT FORMAT:
 | Date | Step | Question | Status |
 |---|---|---|---|
 ```
+
+### 13.1a Commit messages (the only canonical rule)
+
+Three documents used to describe this differently. This is the single source of truth; `CONTRIBUTING.md` §4
+repeats it, and `scripts/check-commit-msg.mjs` enforces it through a `commit-msg` hook.
+
+```text
+type(scope): summary in the imperative, ≤ 100 chars
+
+Why this change, in one or two sentences. What it does not do.
+
+Refs: FR-LDG-001, FR-LDG-002
+Slice: S1.5.3
+```
+
+| Part | Rule |
+|---|---|
+| `type` | `feat`, `fix`, `chore`, `ci`, `docs`, `test`, `refactor`, `perf`, `build`, `revert` |
+| `scope` | **what the commit is about**: a step id (`S1.5`), one or more FR ids (`FR-AUTH-001..005`), or a doc area (`docs`, `deck`, `plan`). All three are legal — the earlier "scope = step ID only" rule was too narrow for feature work, which is why §6 examples use FR ids. |
+| `Refs:` | the FR ids the commit advances; omitted for infrastructure and docs |
+| `Slice:` | **required when the commit touches product code** (`src/`, `supabase/`, `tests/`), and must name a slice that exists in `docs/slices.json`. Omitted for tooling and docs commits (`scripts/`, `.githooks/`, `docs/`, `deck/`) — plan work is not a slice, and a false trailer corrupts the progress ledger. |
+
+Install the hook once per clone: `git config core.hooksPath .githooks`. A malformed message is rejected at
+commit time with the reason, not discovered in review.
 
 ### 13.2 First ten commits (suggested)
 

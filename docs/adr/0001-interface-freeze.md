@@ -10,8 +10,8 @@
 The build plan is split into 401 slices of at most one agent-day so that no single agent session carries a
 step that is too large for its context. That fixes two defect classes (context truncation, multi-concern
 diffs) and **worsens a third**: interface drift. With four times as many sessions touching the codebase, two
-agents will independently invent a different shape for the same concept — a `PaymentProvider.refund` that
-returns a boolean in one slice and throws in another, an event named `payment.succeeded` in one adapter and
+agents will independently invent a different shape for the same concept — a `refundPayment` that returns a
+boolean in one slice and throws in another, an event named `payment.succeeded` in one adapter and
 `payments.success` in the next.
 
 The same argument applies to the four concepts that cross the most boundaries: money, ledger posting,
@@ -25,18 +25,19 @@ Before any feature step, S0.14 lands four **types-only** files plus a contract t
 1. `src/lib/money/types.ts` — `Money = string`, branded `MicroUsd`, parser/formatter signatures.
 2. `src/lib/ledger/types.ts` — entry draft, posting, result, and `postLedger(tx, posting)` signature, with
    field names copied verbatim from master spec §8.7 so SQL and TypeScript cannot disagree.
-3. `src/lib/payments/provider.ts` — `PaymentProvider` with `createPayment`, `confirmPayment`, `capture`,
-   `refund`, `void`, `retrieve`, `verifyWebhook`. Methods return discriminated results; a decline is data,
-   never a thrown exception.
-4. `src/lib/payments/events.ts` — one `NormalizedEvent` shape and `EVENT_TYPES` from Appendix C. Adapters
-   normalise into it; nothing else invents event names.
+3. `src/lib/processors/types.ts` — the **existing, already normative** `PaymentProcessor` interface from
+   master spec §4.1 (15 methods), `ProcessorCapabilities` from §4.4, `ProcessorError`, and the canonical
+   status/decline enums. Ported verbatim: this step freezes it, it does not design it.
+4. `src/lib/processors/events.ts` — one `NormalizedEvent` shape, `VerifiedEvent`, and `EVENT_TYPES` from
+   Appendix C. Adapters normalise into it; nothing else invents event names.
 
 Runtime logic may not be added to these files. They change only by a new ADR that supersedes this one, with
 the contract fixture updated in the same PR.
 
 ## Consequences
 
-**Easier.** A new processor is one adapter file (`CHANGE-PLAYBOOK.md` R1). A ledger caller cannot disagree
+**Easier.** A new processor is one adapter file (`CHANGE-PLAYBOOK.md` R1), because the interface and the
+normalisation target already exist. A ledger caller cannot disagree
 with the SQL function. Event handling is written once. Parallel agent sessions can no longer invent competing
 shapes, because the compiler rejects them.
 
@@ -44,7 +45,7 @@ shapes, because the compiler rejects them.
 here is felt by every later step. This is why S0.14 is gated in Phase 0 and why a deliberate field rename must
 turn the contract test red.
 
-**Revisit.** After Phase 1, when real processor traffic has exercised `PaymentProvider` and the event shape.
+**Revisit.** After Phase 1, when real processor traffic has exercised `PaymentProcessor` and the event shape.
 Any friction found then is expected to be *additive*; a breaking change needs ADR 0002.
 
 ## Alternatives considered

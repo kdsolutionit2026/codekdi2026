@@ -7,6 +7,8 @@
 
 ## Start here
 
+**A person joining the build:** [CONTRIBUTING.md](CONTRIBUTING.md) — first 15 minutes, where each answer lives, the commit format, and the six checks to run before accepting an agent's work.
+
 | Document | What it is |
 |---|---|
 | **[docs/MASTER_SPECIFICATION.md](docs/MASTER_SPECIFICATION.md)** | The authoritative, contradiction-free master specification: product, compliance, architecture, full database schema, double-entry ledger, RBAC, payments/risk, security, UI/UX, API, 3-phase plan, and a 241-row traceability matrix. |
@@ -23,7 +25,7 @@
 | [docs/PROGRESS.md](docs/PROGRESS.md) | Live build tracker: current step, last session's results, environment versions. The agent updates it every session. |
 | [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) | Business/legal decisions that must be closed before live traffic. |
 | [docs/runbooks/README.md](docs/runbooks/README.md) | Operational runbooks to write before launch. |
-| [scripts/](scripts/) | Dependency-free plan gates: `check-docs.mjs`, `check-steps.mjs`, `check-fr-coverage.mjs`, `gen-slices.mjs`. All four run in CI on every PR. |
+| [scripts/](scripts/) | Dependency-free plan gates: `check-docs.mjs`, `check-steps.mjs`, `check-fr-coverage.mjs`, `gen-slices.mjs`, plus `check-commit-msg.mjs` (a `commit-msg` hook via `git config core.hooksPath .githooks`). All four gates run in CI on every PR. |
 
 ## Non-negotiables (summary)
 

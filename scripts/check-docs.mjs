@@ -6,6 +6,7 @@ import { readFileSync, existsSync } from 'node:fs';
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const files = [
   'spec.md',
+  'CONTRIBUTING.md',
   'docs/MASTER_SPECIFICATION.md',
   'docs/COMPONENTS.md',
   'docs/AGENT_PLAYBOOK.md',

@@ -40,7 +40,7 @@ A wrong number is never fixed by changing the display layer. Find the posting.
 
 ## 3. "A payment is stuck in pending / processing"
 
-1. **Compare states**: what does the processor say (`PaymentProvider.retrieve`) versus our state machine?
+1. **Compare states**: what does the processor say (`PaymentProcessor.getPaymentIntent` / `getPayout`) versus our state machine?
 2. **Did the webhook arrive?** Look for the `(processor, event_id)` row. If absent, the gateway rejected the
    signature, timed out, or retried — check the processor's delivery log.
 3. **Did it arrive but do nothing?** The event was deduped or the worker never picked it up: inspect
