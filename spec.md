@@ -512,6 +512,7 @@ Then `0002b_app_roles.sql` creates `app_runtime` and `app_service` exactly as in
    - `src/components/ui/date-display.tsx` — merchant timezone + UTC tooltip.
 5. Layouts: `(marketing)`, `(auth)`, `(merchant)/app`, `(admin)/admin` with responsive shells: sidebar 240 px ≥ 1024, collapsible tablet, bottom nav (Home, Payments, Money, Support, More) < 640.
 6. `src/app/design/page.tsx` — a dev-only gallery rendering every primitive and every status badge (gate behind `APP_ENV !== 'production'`).
+7. `tests/visual/shots.mjs` — `pnpm shots <route...>`: launches Playwright headless, captures each route at 360×800, 768×1024 and 1440×900 (plus the BN locale) into `tests/visual/out/`, and prints the file paths. This is how an agent *sees* a screen: a screenshot it reads, not a description it imagines. Add `tests/visual/out/` to `.gitignore`; keep the baselines that matter in `tests/visual/baseline/`.
 
 **Tests:** Playwright screenshot of `/design` at 320/768/1440; axe scan with zero serious violations; a unit test asserting `status-badge` covers **every** enum value.
 **Verify:** `pnpm test && pnpm test:e2e --grep design`
@@ -3462,7 +3463,7 @@ CI wiring: `.github/workflows/plan-gates.yml` runs all four on every push to `ma
 - **Done when** must be observable from outside the code (a DB row, a PDF, an email, a ledger balance), never "code written".
 - **Tests** must name the specific assertion that would catch a regression, not "unit tests".
 - Estimates are not promises; the gate and the Definition of Done are.
-- A slice's `reviewed: false` is a **blocker**, not a note (§19.2 G5). Reviewing the slice — one day, one seam, one FR, one named test — is the act that makes auto-merge safe. Today 279 of 401 slices are reviewed; no phase-2 step may start until its own slices are.
+- A slice's `reviewed: false` is a **blocker**, not a note (§19.2 G5). Reviewing the slice — one day, one seam, one FR, one named test — is the act that makes auto-merge safe. Today 279 of 402 slices are reviewed; no phase-2 step may start until its own slices are.
 
 ### 22.3 Documentation change control
 

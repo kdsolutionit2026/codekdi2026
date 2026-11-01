@@ -11,7 +11,7 @@ git clone https://github.com/kdsolutionit2026/codekdi2026 && cd codekdi2026
 node -v                       # 20+ is enough for the gates; the app needs 22+
 node scripts/check-docs.mjs   # 0 problem(s) across 8 file(s)
 node scripts/check-fr-coverage.mjs | tail -1   # 241 requirements · 0 unowned · 61 steps
-node scripts/gen-slices.mjs --check            # docs/slices.json up to date — 401 slices
+node scripts/gen-slices.mjs --check            # docs/slices.json up to date — 402 slices
 node scripts/check-steps.mjs --slices S1.5     # the actual work queue for one step
 ```
 
@@ -51,7 +51,7 @@ node scripts/check-steps.mjs S1.5                 # but first: are its dependenc
 Rules that apply to humans and agents identically:
 
 - **One slice per commit.** A slice is at most one agent-day, one seam, one FR, one named test.
-- **Do not start a step whose slices are `reviewed: false`** — 122 of 401 are still unreviewed (phases 2–3).
+- **Do not start a step whose slices are `reviewed: false`** — 122 of 402 are still unreviewed (phases 2–3).
   Reviewing a slice means agreeing it is one day, one seam, one test. `check-steps.mjs --strict` enforces it.
 - **The test exists before the code.** Write the failing test named in the slice, paste the failure, then build.
 - **Do not edit** `spec.md`, `docs/MASTER_SPECIFICATION.md`, `docs/steps.json`, or a previous step's tests to

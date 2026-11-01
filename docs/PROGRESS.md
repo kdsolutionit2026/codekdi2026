@@ -4,15 +4,25 @@
 
 ## Status
 
-- **Current phase:** Phase 0 — not started (0 of 61 steps done; 0 of 401 slices done)
+- **Current phase:** Phase 0 — not started (0 of 61 steps done; 0 of 402 slices done)
 - **Last completed step:** none
 - **Next step:** S0.1 — repository scaffold and toolchain (`npm`-free: `pnpm`)
 - **Steps total:** 61 (14 phase 0 · 21 phase 1 · 18 phase 2 · 8 phase 3) — see `docs/steps.json`
-- **Slices:** 401, every one ≤ 1 agent-day, 279 reviewed (phases 0–1) — see `docs/slices.json`
+- **Slices:** 402, every one ≤ 1 agent-day, 279 reviewed (phases 0–1) — see `docs/slices.json`
 - **Blocked by:** nothing
 - **Last environment check:** 2026-11-01 — repository contains docs, the plan checkers, the slice registry and four decks (`deck/`); no application code yet
 
 ## Log (newest first)
+
+### 2026-11-01 (third) — the Claude operating kit
+- Done: `CLAUDE.md` — auto-loaded project memory: what to read (and never read), the non-negotiables, the loop, the commands, the two-strike rule
+- Done: `.claude/commands/` — six project slash commands with tool allowlists: `/kickoff`, `/verify`, `/ui`, `/review`, `/adapter`, `/ship`; `.claude/agents/reviewer.md` as a read-only subagent
+- Done: `.claude/settings.json` — permission allowlist (gates, git, pnpm, Playwright MCP) and deny rules that block `--no-verify`, force-push and reading `.env*`; a `PostToolUse` hook runs the docs gate after any doc edit (silent when green, reports drift when red — verified both ways)
+- Done: `docs/BUILD-WITH-CLAUDE.md` — the operating manual: 20-minute setup, Playwright MCP for live preview, the eight-step slice loop, the proof ladder (8 rungs), the UI checklist at 360/768/1440, the processor-adapter rules and 8 checks, the 10 failure modes, the plan-defect fast lane, metrics, and copy-paste prompts
+- Done: S0.4 gains `tests/visual/shots.mjs` (`pnpm shots <route>` → screenshots at three widths + BN), so "Claude looked at the screen" is a repeatable command rather than an intention. Slices 401 → 402
+- Gate: check-docs 0 (10 files) · check-fr 241/241 · gen-slices --check current · check-steps --strict --granularity exit 0
+- Deviations: none
+- Next: S0.1
 
 ### 2026-11-01 (later) — change playbook, troubleshooting ladder, ADRs
 - Done: `docs/CHANGE-PLAYBOOK.md` — 12 extension recipes with a **do-not-touch** column (new provider/currency/country/method/report/permission/language/event/page/price/plan step), blast-radius tiers A/B/C, public-surface versioning + 90-day deprecation policy, and the metrics that say the platform is still easy to change
@@ -24,8 +34,8 @@
 - Next: S0.1
 
 ### 2026-11-01 — execution layer: slices, test-first and frozen contracts
-- Done: `scripts/gen-slices.mjs` + `docs/slices.json` — every step decomposed mechanically from its `**Build**` list into **401 slices of ≤ 1 agent-day** (max 1.0, sum 253.0 = the plan's effort). Slices carry `seam`, `kind`, `gate`, `test`, `reviewed`, `status`; the file is generated, never hand-edited; `--check` fails CI on drift.
-- Done: `docs/STEP-GRANULARITY.md` — two levels (step = product contract, slice = agent contract), rules G1–G6, the ≤400-line / one-FR / one-seam budget, the three gate tiers (<60 s / ~5 min / ~30 min), over-splitting hazards and their fixes, and the honest 60 → 401 arithmetic (most of the gain is the first split; ~1,500 is flat or worse).
+- Done: `scripts/gen-slices.mjs` + `docs/slices.json` — every step decomposed mechanically from its `**Build**` list into **402 slices of ≤ 1 agent-day** (max 1.0, sum 253.0 = the plan's effort). Slices carry `seam`, `kind`, `gate`, `test`, `reviewed`, `status`; the file is generated, never hand-edited; `--check` fails CI on drift.
+- Done: `docs/STEP-GRANULARITY.md` — two levels (step = product contract, slice = agent contract), rules G1–G6, the ≤400-line / one-FR / one-seam budget, the three gate tiers (<60 s / ~5 min / ~30 min), over-splitting hazards and their fixes, and the honest 60 → 402 arithmetic (most of the gain is the first split; ~1,500 is flat or worse).
 - Done: `scripts/check-steps.mjs` gained `--slices` and `--granularity`, and `--strict` now also enforces G5/G6. **§19.1 preserved:** a bare run is still report-only and exits 0; only `--strict` / `--granularity` can fail. Verified both ways in a scratch copy (G2/G3/G5 fire, exit 1; bare run exit 0).
 - Done: **S0.14 — interface freeze** (new step, phase 0): money, ledger posting, `PaymentProcessor` and the canonical webhook event are decided as types + a contract test *before* anything implements them. Splitting worsens interface drift; this is the fix. Phase 0 gate now requires it.
 - Done: §9.1 gate tiers, §19.2 slice registry + G1–G6, §22 fourth gate + slice review rule; `docs/AGENT_PLAYBOOK.md` §4.1 rewritten as the slice loop (RED → BUILD → GATE → COMMIT); `.github/workflows/plan-gates.yml` runs all four gates on every PR.
@@ -47,7 +57,7 @@
 - Next: S0.1
 
 ### 2026-10-29 — planning
-- Done: master specification v1.0.0 (`docs/MASTER_SPECIFICATION.md`); build plan v1.1.0 (`spec.md`) — 61 steps, 401 slices, Appendix B requirement map (241/241 owned), Phase 2/3 packets, security/ops steps S0.12/S0.13
+- Done: master specification v1.0.0 (`docs/MASTER_SPECIFICATION.md`); build plan v1.1.0 (`spec.md`) — 61 steps, 402 slices, Appendix B requirement map (241/241 owned), Phase 2/3 packets, security/ops steps S0.12/S0.13
 - Gate: `node scripts/check-docs.mjs` 0 problems · `node scripts/check-fr-coverage.mjs` 241/241 · `node scripts/check-steps.mjs --strict` exit 0
 - Tests: n/a (no code)
 - Deviations: none

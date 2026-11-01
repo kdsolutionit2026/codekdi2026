@@ -1,6 +1,6 @@
 # Change playbook — adding to KD PAY after it is built
 
-The build plan is engineered for the *first* build (61 steps, 401 slices). This file is for everything after:
+The build plan is engineered for the *first* build (61 steps, 402 slices). This file is for everything after:
 a new processor, a new country, a new currency, a pricing change, a breaking API change. It exists because
 "easy to change later" is not a property you get from clean code — it comes from knowing, before you start,
 **which files are safe to touch and which ones are load-bearing**.

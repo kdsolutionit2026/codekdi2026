@@ -27,7 +27,7 @@ Nothing sits between them. If a slice needs a sub-slice, the slice was a step in
 
 Because a step is a promise to a human: "when this is `done` the product can do X". 400 promises of that
 weight cannot be reviewed, sequenced, or explained to anyone. The eight-phase, 61-step structure is the
-product roadmap; the 401 slices are the queue an agent pulls from. Keeping both, with slices *derived* from
+product roadmap; the 402 slices are the queue an agent pulls from. Keeping both, with slices *derived* from
 steps, is what stops the two from drifting apart.
 
 ---
@@ -61,7 +61,7 @@ seam is a slice that will leak across three files; a slice with no gate is a sli
 names a test.**
 Test-first, mechanically: the slice carries the name of the test file *and* the test that must exist and fail
 before the code is written. Review happens on the plan, not on the diff — that is what makes a one-day unit
-safe to auto-merge. Today 279 of 401 slices are reviewed (all of phases 0 and 1); the remaining 122 are
+safe to auto-merge. Today 279 of 402 slices are reviewed (all of phases 0 and 1); the remaining 122 are
 phase 2–3 slices still awaiting a review pass. **No phase-2 step can start until its slices are reviewed**,
 which is the intended meaning: the review is the gate, not a formality after the fact.
 
@@ -144,7 +144,7 @@ Two things follow, and they are the reason this document is short.
 
 1. **Most of the gain is in the first split.** Going from 60 multi-day packets to one-day slices buys nearly
    everything. Going from 250 to 1,500 buys approximately nothing and costs review fatigue, merge conflicts,
-   and lost intent. **401 slices is the right neighbourhood; the target is not 1,500.**
+   and lost intent. **402 slices is the right neighbourhood; the target is not 1,500.**
 2. **Splitting only fixes half the problem.** It reduces context truncation and multi-concern diffs. It does
    **nothing** for unverifiable acceptance (fixed by test-first, G5) and it actively *worsens* interface drift
    (fixed by the frozen contracts in S0.14). A split plan with no test-first rule and no frozen interfaces is

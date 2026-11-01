@@ -7,7 +7,7 @@
 
 ## Context
 
-The build plan is split into 401 slices of at most one agent-day so that no single agent session carries a
+The build plan is split into 402 slices of at most one agent-day so that no single agent session carries a
 step that is too large for its context. That fixes two defect classes (context truncation, multi-concern
 diffs) and **worsens a third**: interface drift. With four times as many sessions touching the codebase, two
 agents will independently invent a different shape for the same concept — a `refundPayment` that returns a

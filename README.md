@@ -2,12 +2,14 @@
 
 **KD PAY LLC** — a white-label PayFac / payment aggregation platform for Asian sub-merchants, built on Next.js + Supabase + Vercel.
 
-> **Current status:** specification complete (v1.0.0) and build plan complete (v1.2.0) — 61 steps across 4 phases, every one of the 241 requirements assigned to an owner step, decomposed into 401 slices of at most one agent-day each. Application code has not been scaffolded yet.
+> **Current status:** specification complete (v1.0.0) and build plan complete (v1.2.0) — 61 steps across 4 phases, every one of the 241 requirements assigned to an owner step, decomposed into 402 slices of at most one agent-day each. Application code has not been scaffolded yet.
 > The specification is the single source of truth and is written to be executed by AI coding agents.
 
 ## Start here
 
 **A person joining the build:** [CONTRIBUTING.md](CONTRIBUTING.md) — first 15 minutes, where each answer lives, the commit format, and the six checks to run before accepting an agent's work.
+
+**Building it with Claude:** [docs/BUILD-WITH-CLAUDE.md](docs/BUILD-WITH-CLAUDE.md) — setup, the eight-step slice loop, live preview with Playwright, the proof ladder, the UI checklist, the processor-adapter rules, and the ten ways it goes wrong.
 
 | Document | What it is |
 |---|---|
@@ -17,11 +19,12 @@
 | [docs/AGENT_PLAYBOOK.md](docs/AGENT_PLAYBOOK.md) | **How to run the build with an AI agent**: which agent, the session loop, the evidence standard, how to cross-check that features actually work, and the failure modes to watch for. |
 | [docs/reviews/](docs/reviews/) | One review file per step — the audit trail proving each step was verified by a second session. |
 | [docs/steps.json](docs/steps.json) | Machine-readable registry of all 61 steps: dependencies, effort, files that must exist, verify command, owned FRs, status. The agent reads it to know what to do next. |
-| [docs/slices.json](docs/slices.json) | The execution layer, **generated** from `spec.md`: 401 slices of ≤1 agent-day, each with a seam, a gate command, a named test and a review flag. The agent pulls one slice per commit. Never hand-edited. |
+| [docs/slices.json](docs/slices.json) | The execution layer, **generated** from `spec.md`: 402 slices of ≤1 agent-day, each with a seam, a gate command, a named test and a review flag. The agent pulls one slice per commit. Never hand-edited. |
 | [docs/STEP-GRANULARITY.md](docs/STEP-GRANULARITY.md) | Why work is cut this way, the six rules G1–G6, the three gate tiers, the over-splitting hazards, and the escaped-defect arithmetic behind them. |
 | [docs/CHANGE-PLAYBOOK.md](docs/CHANGE-PLAYBOOK.md) | **After the build**: 12 recipes for adding a provider, currency, country, payment method, report, permission, language, event, page or price — each with what to touch, what you must **not** touch, and how to prove it. Plus blast-radius tiers and the versioning/deprecation policy. |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Symptom → ordered checks, cheapest first: empty results, wrong money, stuck payments, double posts, missing webhooks, dead jobs, bad PDFs, random sign-outs, local-vs-Vercel, CI-only failures. |
 | [docs/adr/](docs/adr/) | Architecture decision records — one per decision a reviewer could question in six months, starting with the S0.14 interface freeze. |
+| [CLAUDE.md](CLAUDE.md) + [.claude/](.claude/) | The agent operating kit, loaded automatically by Claude Code: the rules, six slash commands (`/kickoff`, `/verify`, `/ui`, `/review`, `/adapter`, `/ship`), a read-only reviewer subagent, and a hook that catches doc drift mid-session. |
 | [docs/PROGRESS.md](docs/PROGRESS.md) | Live build tracker: current step, last session's results, environment versions. The agent updates it every session. |
 | [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) | Business/legal decisions that must be closed before live traffic. |
 | [docs/runbooks/README.md](docs/runbooks/README.md) | Operational runbooks to write before launch. |
@@ -64,7 +67,7 @@ Next.js (App Router) · TypeScript (strict) · Supabase (Postgres + Auth + Stora
 ```bash
 node scripts/check-docs.mjs         # 0 problems: fences, tables, anchors, step packets, § references
 node scripts/check-fr-coverage.mjs  # 241 requirements / 241 owned / 0 unowned
-node scripts/gen-slices.mjs         # 401 slices, ≤1 agent-day each, sum-checked against the plan
+node scripts/gen-slices.mjs         # 402 slices, ≤1 agent-day each, sum-checked against the plan
 node scripts/check-steps.mjs        # 61 steps, dependency-safe order, slices, files-to-create per step
 ```
 

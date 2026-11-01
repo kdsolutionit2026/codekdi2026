@@ -11,6 +11,7 @@ const files = [
   'docs/COMPONENTS.md',
   'docs/AGENT_PLAYBOOK.md',
   'docs/STEP-GRANULARITY.md',
+  'docs/BUILD-WITH-CLAUDE.md',
   'docs/CHANGE-PLAYBOOK.md',
   'docs/TROUBLESHOOTING.md',
   'docs/adr/README.md',
