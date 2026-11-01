@@ -162,15 +162,46 @@ const steps = heads.map((h, k) => {
 });
 
 // ---------- helpers ----------
-const slugSeam = (text) => {
+// The seam is decided by WHERE the change lands first, and only then by what the sentence says. Reading
+// keywords out of a long step title mislabels slices ("add shadcn primitives … table …" is UI, not schema).
+const slugSeam = (item, stepTitle = '') => {
+  const text = String(item);
+
+  // 1. an explicit path in the item wins outright
+  const pathMatch = text.match(/(?:src|supabase|tests|scripts|docs|deck)\/[\w./()\[\]-]+/);
+  if (pathMatch) {
+    const p = pathMatch[0].toLowerCase();
+    if (p.endsWith('.css')) return 'ui';
+    if (p.startsWith('supabase/migrations')) return 'schema';
+    if (p.startsWith('src/components') || p.startsWith('src/app/(') || p.startsWith('src/app/design')) return 'ui';
+    if (p.startsWith('src/app/api') || p.startsWith('src/app/')) return 'http';
+    if (p.startsWith('tests/') || p.startsWith('scripts/')) return 'test';
+    if (p.startsWith('docs/')) return 'docs';
+    if (p.includes('/ledger/') || p.includes('/money/')) return 'domain';
+    if (p.includes('/processors/')) return 'contract';
+    if (p.includes('/webhooks/')) return 'http';
+    if (p.includes('/security/')) return 'module';
+    return 'module';
+  }
+
+  // 2. otherwise, the item's own wording — never the whole step title
   const t = text.toLowerCase();
-  if (/\b(migration|\.sql|schema|index|constraint|rls|policy|partition|table|column|trigger)\b/.test(t)) return 'schema';
-  if (/\b(page|screen|component|layout|form|portal|theme|css|nav|dialog|dashboard|badge)\b/.test(t)) return 'ui';
-  if (/\b(route|endpoint|api|openapi|sdk|webhook|http|csp|header)\b/.test(t)) return 'http';
-  if (/\b(test|suite|harness|fixture|fuzz|matrix|drill|budget|lint)\b/.test(t)) return 'test';
+  if (/\b(migration|\.sql|schema|index|constraint|rls|policy|partition|column|trigger|grant)\b/.test(t)) return 'schema';
+  if (/\b(page|screen|component|layout|form|portal|theme|css|nav|dialog|dashboard|badge|gallery|shot)\b/.test(t)) return 'ui';
+  if (/\b(route|endpoint|openapi|sdk|webhook|http|csp|header)\b/.test(t)) return 'http';
+  if (/\b(test|suite|harness|fixture|fuzz|matrix|drill|budget|lint|pass)\b/.test(t)) return 'test';
   if (/\b(adapter|interface|contract|provider|signature|normalis|normaliz)\b/.test(t)) return 'contract';
-  if (/\b(doc|readme|runbook|adr|progress|whitepaper|pack)\b/.test(t)) return 'docs';
-  if (/\b(ci|workflow|deploy|docker|vercel|backup|monitor|slo|runbook|drill|environment|cron)\b/.test(t)) return 'ops';
+  if (/\b(doc|readme|runbook|adr|whitepaper|pack|onboarding guide)\b/.test(t)) return 'docs';
+  if (/\b(scaffold|toolchain|tsconfig|eslint|package\.json)\b/.test(t)) return 'ops';
+  if (/\b(ci|workflow|deploy|docker|vercel|backup|monitor|slo|environment|cron)\b/.test(t)) return 'ops';
+
+  // 3. last resort: the step's own title, which is at least about one topic
+  const tt = String(stepTitle).toLowerCase();
+  if (/\b(design|ui|screen|portal|console|cms|shell)\b/.test(tt)) return 'ui';
+  if (/\b(migration|schema|rls|bootstrap|trigger)\b/.test(tt)) return 'schema';
+  if (/\b(api|webhook|rest|endpoint)\b/.test(tt)) return 'http';
+  if (/\b(ci|deploy|operations|backup|monitor|scaffold|toolchain)\b/.test(tt)) return 'ops';
+  if (/\b(ledger|fee|money|invoice|payment|payout|refund|tax|fx)\b/.test(tt)) return 'domain';
   return 'module';
 };
 
@@ -184,6 +215,33 @@ const KIND = {
   test: 'unit',
   ops: 'smoke',
   docs: null,
+};
+
+// The test file a slice must create *before* the code exists. Derived so that G5 (a step cannot start on a
+// slice with no named test) is satisfiable on day one, and so the agent never has to invent a location.
+// A packet may override it; the path is a proposal, not a rule.
+const TEST_DIR = {
+  rls: 'tests/rls',
+  'property+unit': 'tests/unit',
+  unit: 'tests/unit',
+  contract: 'tests/contract',
+  integration: 'tests/integration',
+  e2e: 'tests/e2e',
+  smoke: 'tests/smoke',
+};
+const slugOf = (s) =>
+  s
+    .toLowerCase()
+    .replace(/`/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 42)
+    .replace(/-$/, '');
+const testPathFor = (kind, id, title) => {
+  if (!kind) return null;
+  const dir = TEST_DIR[kind] ?? 'tests/unit';
+  const ext = kind === 'e2e' ? 'spec.ts' : 'test.ts';
+  return `${dir}/${id.toLowerCase()}-${slugOf(title)}.${ext}`;
 };
 
 const clean = (s) =>
@@ -242,7 +300,7 @@ for (const s of steps) {
   list.forEach((t, i) => {
     const id = `${s.id}.${i + 1}`;
     const title = TITLE_FIX[id] ?? t;
-    const seam = slugSeam(`${title} ${s.items[i] ?? ''}`);
+    const seam = slugSeam(s.items[i] ?? title, title);
     slices.push({
       id,
       step: s.id,
@@ -252,7 +310,7 @@ for (const s of steps) {
       kind: KIND[seam],
       effort: efforts[i],
       gate: s.verify || 'pnpm gate',
-      test: null, // named by the agent on review, before the first red run
+      test: testPathFor(KIND[seam], id, title), // the file that must exist and fail before the code
       reviewed: REVIEWED_PHASES.includes(phase) || Boolean(OVERRIDES[s.id]),
       source: OVERRIDES[s.id] ? 'authored' : 'derived',
       status: 'pending',

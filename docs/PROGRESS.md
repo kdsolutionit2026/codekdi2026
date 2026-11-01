@@ -14,6 +14,18 @@
 
 ## Log (newest first)
 
+### 2026-11-01 (fifth) — plan audit: is the plan actually buildable?
+- Done: `scripts/plan-audit.mjs` — checks the six properties that make a plan unbuildable: every dependency resolves (A1), no cycles (A2), every step reachable from S0.1 (A3), packet `**Features:**` == registry FRs with ranges expanded (A4), packet effort == registry (A5), slices sum to the step effort (A6). Plus judgement warnings: thin packets (A7) and unnamed tests (A8). `--strict` for CI
+- Result on this plan: **0 structural defects** — 61 nodes, 129 edges, 0 cycles, 1 root, 0 FR mismatches, 0 effort mismatches, 402 slices summing to 253.0 days
+- Two real defects found and fixed while auditing:
+  1. **G5 could never be satisfied** — 394 of 402 slices had `test: null`, so no step could move to `in_progress`. The generator now derives the test path from the slice's `kind` (`tests/{rls,unit,contract,integration,e2e,smoke}/…`), and docs slices are exempt (their gate is `check-docs`). Verified: S0.1 now starts with `--strict` green
+  2. **Seam classifier mislabelled slices** — it read keywords from the whole step title, so `globals.css` became `http` and "Max-Age per role" became `schema`. It now reads the path first, then the item text, then the step title; `docs 16 · ops 3 · schema 55 · ui 63 · module 152 · test 37 · domain 35 · http 26 · contract 15`
+- Done: `docs/BUILD-BOOK.md` §1.5 — which file *is* the plan (5 layers and which wins), the A1–A6 audit, what it cannot prove, and the 60-second per-chapter sanity check
+- Done: the audit is the first step of CI; README, CONTRIBUTING and CLAUDE.md list it
+- Gate: plan-audit 0 · check-docs 0 (11 files) · check-fr 241/241 · gen-slices --check current · check-steps --strict exit 0
+- Deviations: none
+- Next: S0.1
+
 ### 2026-11-01 (fourth) — the build book
 - Done: `docs/BUILD-BOOK.md` (700 lines) — the guide a first-time vibe coder follows end to end: what to read first (tiered, with time estimates), the 22-file library in reading order, the serial order of all 61 chapters in 4 acts, 20 milestones with the day each becomes demonstrable, the 9-step session procedure, context discipline for agents, the 9-rung test ladder with the 8 tests a PayFac always skips, the weekly 5-slice audit, the 6-step repair procedure and its 3 false fixes, the 3-seat model for cross-agent review, the processor rules in the order they bite, a 13-week plan, and a printable cheat sheet
 - Done: `scripts/next.mjs` — `node scripts/next.mjs` prints the next chapter, its slices (reviewed / tested flags), the commands to run and what comes after; `--order` is the full serial build order (greedy topological sort in chapter order); `--all` lists only what is unblocked

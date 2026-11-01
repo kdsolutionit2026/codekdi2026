@@ -9,7 +9,9 @@ also run the app.
 ```bash
 git clone https://github.com/kdsolutionit2026/codekdi2026 && cd codekdi2026
 node -v                       # 20+ is enough for the gates; the app needs 22+
-node scripts/check-docs.mjs   # 0 problem(s) across 8 file(s)
+node scripts/plan-audit.mjs   # is the plan buildable? deps, cycles, packets vs registry
+node scripts/next.mjs         # what to do next, with its slices
+node scripts/check-docs.mjs   # 0 problem(s) across 11 file(s)
 node scripts/check-fr-coverage.mjs | tail -1   # 241 requirements · 0 unowned · 61 steps
 node scripts/gen-slices.mjs --check            # docs/slices.json up to date — 402 slices
 node scripts/check-steps.mjs --slices S1.5     # the actual work queue for one step

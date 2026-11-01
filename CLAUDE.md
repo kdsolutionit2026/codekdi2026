@@ -44,6 +44,7 @@ node scripts/check-steps.mjs --slices S1.5   # pick the next `pending` slice
 ```bash
 pnpm dev                     # local preview on http://localhost:3000 (after S0.1)
 pnpm verify                  # lint + typecheck + unit + integration + RLS
+node scripts/plan-audit.mjs # is the plan buildable (deps, cycles, packets vs registry)
 node scripts/check-docs.mjs  # docs integrity      (always green before you stop)
 node scripts/check-fr-coverage.mjs               # 241 FRs, one owner each
 node scripts/gen-slices.mjs --check              # execution layer not stale

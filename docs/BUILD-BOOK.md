@@ -100,6 +100,73 @@ lines respectively, and an agent that reads them starts inventing. Second: if tw
 
 ---
 
+## 1.5 Which file *is* the plan — and how to know it is right
+
+You asked a sharper question than "what do I read": *which file do I trust to be the plan, and is it correct?*
+Here is the layer map, and then how to check it rather than believe it.
+
+### The five layers, and which one wins
+
+| Layer | File | Answers | If it disagrees with another layer |
+|---|---|---|---|
+| **Rules** | `docs/MASTER_SPECIFICATION.md` | what the system must do: schema, ledger, security, API, 241 requirements | **it wins, always.** A conflict is a bug to report, not to reconcile |
+| **Plan** | `spec.md` | what exists at the end of each of the 61 steps, which files, which test, how to verify | loses to the rules; wins over the registry |
+| **Registry** | `docs/steps.json` | dependencies, effort, FR ownership, file list, status — the machine view of the plan | must equal `spec.md`; the audit proves it |
+| **Execution** | `docs/slices.json` | the ≤1-day queue derived from the plan's `**Build**` lists | **generated** — never hand-edited; regenerate instead |
+| **Guide** | `docs/BUILD-BOOK.md` (this file), `BUILD-WITH-CLAUDE.md`, `CONTRIBUTING.md` | how to run the build | descriptive only; it may not invent rules |
+
+So: **`spec.md` is the plan.** `docs/steps.json` is its machine mirror, `docs/slices.json` is the queue built
+from it, and the master spec is the law above all three.
+
+### Is the plan right? Run the audit — do not assume
+
+```bash
+node scripts/plan-audit.mjs            # report
+node scripts/plan-audit.mjs --strict   # exit 1 on a structural defect
+```
+
+It checks the six things that make a plan *unbuildable*, each of which has bitten real projects:
+
+| ID | Check | What it prevents |
+|---|---|---|
+| A1 | every `depends_on` names a real step | a typo silently "satisfies" a dependency, so a step starts before its prerequisite |
+| A2 | no self-dependency, no cycle | an order that can never be satisfied — the build deadlocks at chapter N |
+| A3 | every step is reachable from S0.1 | planned work nobody will ever be told to do |
+| A4 | each packet's `**Features:**` == the registry's `fr` (ranges expanded) | an FR owned on paper but absent from the step that builds it — a silently dropped feature |
+| A5 | each packet's `**Effort:**` == the registry | estimates that drift from the work |
+| A6 | slices sum to the step's effort, none over the 1-day cap | a hidden multi-day slice, or a fake split |
+
+Plus two warnings that are judgement calls, not defects:
+
+- **A7 thin packets** — a step of 3+ days with fewer than 5 build items is under-specified; expect the agent to
+  guess.
+- **A8 unnamed tests** — slices with no test path. The generator now derives one per slice, so this should stay
+  at zero; a non-zero count means the slice cannot start (rule G5, docs slices excepted).
+
+**What the audit does not prove** — and no script can:
+
+| Question | How to answer it |
+|---|---|
+| Does the plan cover the *product*, not just the spec? | read the 20 milestones in §3 and ask "would a merchant pay for the thing this milestone describes?" |
+| Is the order commercially sensible? | Act I → Act II ends at M12 (a sellable product). If that feels late, re-cut the milestones, not the chapters |
+| Are the estimates real? | compare the first five completed chapters against their estimates; scale the rest by that ratio |
+| Is a 15-day step (S3.8) genuinely one step? | read its packet. If it needs two sentences to describe, split it (§20.5 plan defect) |
+
+### The 60-second sanity check before you trust a chapter
+
+Open the chapter's packet and confirm four lines exist and are specific — not "implement the feature":
+
+1. **`**Build**`** — numbered items that each name a file or a command.
+2. **`**Tests**`** or a slice-level test path — an assertion you could write a red test from.
+3. **`**Verify:**`** — a command that actually exists in `package.json`.
+4. **`**Done when:**`** — observable from outside the code (a row, a PDF, an email, a balance).
+
+If any of the four is vague, that is a **plan defect**: fix it with the fast lane (§11) *before* you start, not
+after the agent has guessed. A vague packet is the most expensive kind of bug, because the agent will resolve
+the ambiguity confidently and wrongly.
+
+---
+
 ## 2. The serial build order — 61 chapters in 4 acts
 
 This is the answer to "what do I do first". It is computed from the dependency graph, so it is the *only*

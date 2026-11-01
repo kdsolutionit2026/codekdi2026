@@ -30,7 +30,7 @@
 | [docs/PROGRESS.md](docs/PROGRESS.md) | Live build tracker: current step, last session's results, environment versions. The agent updates it every session. |
 | [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) | Business/legal decisions that must be closed before live traffic. |
 | [docs/runbooks/README.md](docs/runbooks/README.md) | Operational runbooks to write before launch. |
-| [scripts/](scripts/) | `next.mjs` (what to do next) + dependency-free plan gates: `check-docs.mjs`, `check-steps.mjs`, `check-fr-coverage.mjs`, `gen-slices.mjs`, plus `check-commit-msg.mjs` (a `commit-msg` hook via `git config core.hooksPath .githooks`). All four gates run in CI on every PR. |
+| [scripts/](scripts/) | `next.mjs` (what to do next), `plan-audit.mjs` (is the plan buildable) + dependency-free plan gates: `check-docs.mjs`, `check-steps.mjs`, `check-fr-coverage.mjs`, `gen-slices.mjs`, plus `check-commit-msg.mjs` (a `commit-msg` hook via `git config core.hooksPath .githooks`). All four gates run in CI on every PR. |
 
 ## Non-negotiables (summary)
 

@@ -21,6 +21,9 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Plan integrity (deps resolve, no cycles, packets vs registry)
+        run: node scripts/plan-audit.mjs --strict
+
       - name: Docs integrity (fences, tables, anchors, §-refs, packets)
         run: node scripts/check-docs.mjs
 

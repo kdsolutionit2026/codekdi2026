@@ -2379,6 +2379,7 @@ Steps that need **no** migration (S0.12, S1.8, S1.15–S1.17, S1.21, S2.7, S2.8,
 | Slice freshness | `node scripts/gen-slices.mjs --check` | `docs/slices.json` is stale relative to `spec.md` — slices must be regenerated, never hand-edited |
 | Requirement traceability | `pnpm check:fr` | All 241 FRs in master spec §35 have exactly one owner step; `docs/steps.json` agrees with Appendix B |
 | Docs integrity | `pnpm check:docs` | Fences, tables, anchors, step packets and `§` references are all valid (§22) |
+| Plan integrity | `node scripts/plan-audit.mjs --strict` | Dependencies resolve with no cycles, every step is reachable from S0.1, packets and registry agree on FRs and effort, slices sum to the step effort (§19.2, A1–A6) |
 
 **Plan gates:** `pnpm check:steps --strict` (registry vs files, plus slice rules G5–G6), `pnpm check:fr` (every FR has one owner step), `pnpm check:docs` (fences, anchors, tables, §-references — §22), `node scripts/gen-slices.mjs --check` (execution layer not stale).
 
@@ -3326,7 +3327,7 @@ Contract (both files must keep it):
 | `kind` | the test kind implied by the seam (`rls`, `unit`, `contract`, `integration`, `e2e`, `smoke`, or `null`) |
 | `effort` | agent-days; **always ≤ `max_effort_per_slice` (1.0)** |
 | `gate` | the exact command that must pass before the commit |
-| `test` | the test file that must exist — and fail — before the code is written; `null` for docs slices |
+| `test` | the test file that must exist — and fail — before the code is written. **Derived** from `kind` (`tests/rls`, `tests/unit`, `tests/contract`, `tests/integration`, `tests/e2e`, `tests/smoke`), so the agent never invents a location; a packet may override it. `null` only for `docs` slices, which are verified by `check-docs` instead |
 | `reviewed` | a human has read this slice and agrees it is one day, one seam, one FR |
 | `source` | `derived` (from a `**Build**` item) or `authored` (from `scripts/gen-slices.mjs` `OVERRIDES`, for packets with too few bullets) |
 
@@ -3336,7 +3337,7 @@ Rules:
 - **G2** `0 < effort ≤ 1.0`. A step whose total effort is ≤ 1.0 day is exactly one slice — over-splitting a small step is a defect too.
 - **G3** a step has at least `ceil(effort)` slices and its slices sum exactly to `effort`. Fake splits and hidden big slices are both caught.
 - **G4** every slice names a known seam and a gate command.
-- **G5** a step cannot be `in_progress` unless every slice is `reviewed` and every slice names a test (test-first).
+- **G5** a step cannot be `in_progress` unless every slice is `reviewed` and every slice names a test (test-first). **Docs slices are exempt** — their gate is `scripts/check-docs.mjs`. Without that exemption chapter one could never start.
 - **G6** a `done` step has only `done` slices.
 
 `docs/slices.json` is never hand-edited. To change a slice, change the packet's `**Build**` list in this file and run `node scripts/gen-slices.mjs --write`; CI runs `--check` and fails on drift. Titles that read badly after generation are a signal that the `**Build**` list is too terse, not that the JSON needs a patch.
@@ -3453,7 +3454,7 @@ that only changes how the plan *describes* the work is a plan defect.
 
 ## 22. Documentation quality gates (the plan is code)
 
-The specification is the input to every agent session. If it drifts, an agent confidently builds the wrong thing. Four dependency-free scripts keep it honest; all four run in CI and must be green before any docs PR merges.
+The specification is the input to every agent session. If it drifts, an agent confidently builds the wrong thing. Five dependency-free scripts keep it honest; all five run in CI and must be green before any docs PR merges.
 
 CI wiring: `.github/workflows/plan-gates.yml` runs all four on every push to `main` and every PR, with `check-steps.mjs --strict --granularity` as the last step.
 
@@ -3462,6 +3463,7 @@ CI wiring: `.github/workflows/plan-gates.yml` runs all four on every push to `ma
 | `scripts/check-docs.mjs` | `pnpm check:docs` | Unbalanced code fences, ragged table columns, dead internal anchors, a step missing any of Goal / Depends on / Features / Verify / Done when / Commit, a step in `spec.md` missing from `docs/steps.json` (or vice versa), or a `§` reference that points at a section that does not exist |
 | `scripts/check-steps.mjs` | `pnpm check:steps --strict` | A step marked `done` is missing one of its `files` |
 | `scripts/check-fr-coverage.mjs` | `pnpm check:fr` | A requirement in master spec §35 is unowned, owned twice, owned by a step that does not exist, or missing from the registry entry that claims it |
+| `scripts/plan-audit.mjs` | `node scripts/plan-audit.mjs --strict` | The plan is not buildable: an unknown or cyclic dependency, an unreachable step, a packet that disagrees with the registry about FRs or effort, or slices that do not sum to their step |
 | `scripts/gen-slices.mjs` | `node scripts/gen-slices.mjs --check` | `docs/slices.json` no longer matches what `spec.md` derives — the execution layer drifted from the plan, or a slice exceeds 1 agent-day, or the slice efforts no longer sum to the step effort |
 | `scripts/check-steps.mjs --granularity` | `pnpm check:granularity` | G1–G4 of §19.2: a slice with no seam, no gate, a duplicate id, an effort above 1.0, or a step with too few slices for its effort |
 

@@ -58,7 +58,8 @@ The **seam** is the single layer the slice touches — `schema`, `domain`, `modu
 seam is a slice that will leak across three files; a slice with no gate is a slice nobody can verify.
 
 **G5 — A step cannot be `in_progress` or `done` unless every one of its slices is `reviewed: true` and
-names a test.**
+names a test.** (A `docs` slice is exempt — `check-docs` is its gate, and without the exemption the first
+chapter could never start.)
 Test-first, mechanically: the slice carries the name of the test file *and* the test that must exist and fail
 before the code is written. Review happens on the plan, not on the diff — that is what makes a one-day unit
 safe to auto-merge. Today 279 of 402 slices are reviewed (all of phases 0 and 1); the remaining 122 are
